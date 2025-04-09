@@ -1,0 +1,408 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ServiceCenterStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  CLOSED
+  COMING_SOON
+}
+
+enum StaffStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+  SUSPENDED
+}
+
+enum VehicleType {
+  CAR
+  BIKE
+  NONE
+}
+
+enum ServiceStatus {
+  ACTIVE
+  PENDING
+  TEMPORARILY_UNAVAILABLE
+  COMING_SOON
+}
+
+enum ServicePriority {
+  NORMAL
+  EXPRESS
+  PREMIUM
+}
+
+enum PackageType {
+  ONE_TIME
+  SUBSCRIPTION
+  MEMBERSHIP
+}
+
+enum PaymentPolicy {
+  PAYMENT_BEFORE_SERVICE
+  PAYMENT_AFTER_SERVICE
+  PARTIAL_PAYMENT
+  FREE_DIAGNOSTIC
+}
+
+model Brand {
+  id             String          @id @default(dbgenerated("gen_random_uuid()"))
+  name           String          @unique
+  logo           String?
+  description    String?
+  vehicleType    VehicleType
+  website        String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  models         Model[]
+  serviceCenters ServiceCenter[]
+
+  VehicleBrandServiceOffering VehicleBrandServiceOffering[]
+}
+
+model Model {
+  id                           String                        @id @default(dbgenerated("gen_random_uuid()"))
+  name                         String
+  brand                        Brand                         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId                      String
+  vehicleType                  VehicleType
+  isActive                     Boolean                       @default(true)
+  imageUrl                     String?
+  createdAt                    DateTime                      @default(now())
+  updatedAt                    DateTime                      @updatedAt
+  vehicleBrandServiceOfferings VehicleBrandServiceOffering[]
+
+  @@unique([brandId, name, vehicleType])
+}
+
+model Address {
+  id             String         @id @default(dbgenerated("gen_random_uuid()"))
+  street         String
+  city           String
+  state          String
+  country        String
+  postalCode     String
+  landmark       String?
+  additionalInfo String?
+  longitude      Float
+  latitude       Float
+  isVerified     Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  serviceCenter  ServiceCenter?
+}
+
+model ServiceCenter {
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()"))
+  name                   String
+  brand                  Brand                   @relation(fields: [brandId], references: [id])
+  brandId                String
+  addressId              String                  @unique
+  address                Address                 @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  phone                  String
+  alternatePhone         String?
+  email                  String?
+  website                String?
+  status                 ServiceCenterStatus     @default(ACTIVE)
+  rating                 Float?                  @default(0)
+  totalRatings           Int                     @default(0)
+  capacity               Int                     @default(5)
+  description            String?
+  images                 String[]
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  slots                  Slot[]
+  operatingHours         OperatingHours[]
+  serviceCenterOfferings ServiceCenterOffering[]
+}
+
+model OperatingHours {
+  id              String        @id @default(dbgenerated("gen_random_uuid()"))
+  serviceCenter   ServiceCenter @relation(fields: [serviceCenterId], references: [id], onDelete: Cascade)
+  serviceCenterId String
+  openTime        DateTime
+  closeTime       DateTime
+  isClosed        Boolean       @default(false)
+  isHoliday       Boolean       @default(false)
+  holidayReason   String?
+
+  @@unique([serviceCenterId])
+}
+
+model Slot {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()"))
+  serviceCenter      ServiceCenter @relation(fields: [serviceCenterId], references: [id], onDelete: Cascade)
+  serviceCenterId    String
+  startTime          DateTime
+  endTime            DateTime
+  isAvailable        Boolean       @default(true)
+  slotCapacity       Int           @default(1)
+  bookedCapacity     Int           @default(0)
+  isBlocked          Boolean       @default(false)
+  blockReason        String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  externalBookingIds String[]
+}
+
+// Service Category (e.g. Regular Maintenance, Repairs, etc.)
+model ServiceCategory {
+  serviceCategoryId String        @id @default(dbgenerated("gen_random_uuid()")) @map("service_category_id") @db.Uuid
+  name              String        @db.VarChar(255)
+  description       String?       @db.VarChar(255)
+  vehicleType       VehicleType   @default(CAR)
+  icon              String?       @db.Text
+  displayOrder      Int           @default(0)
+  isPopular         Boolean       @default(false)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  serviceTypes      ServiceType[]
+
+  @@unique([name, vehicleType])
+  @@index([vehicleType, isPopular])
+  @@map("service_category")
+}
+
+// Service Type (e.g. Basic Service, Premium Service, Brake Replacement, etc.)
+model ServiceType {
+  serviceTypeId          String                  @id @default(dbgenerated("gen_random_uuid()")) @map("service_type_id") @db.Uuid
+  name                   String                  @db.VarChar(255)
+  description            String?                 @db.VarChar(255)
+  longDescription        String?                 @map("long_description") @db.Text
+  estimatedDuration      Int                     @map("estimated_duration")
+  displayImage           String?                 @map("display_image") @db.Text
+  categoryId             String                  @map("category_id") @db.Uuid
+  category               ServiceCategory         @relation(fields: [categoryId], references: [serviceCategoryId], onDelete: Cascade)
+  recommendedFrequency   String?                 @map("recommended_frequency") @db.Text
+  warningThreshold       Int?                    @map("warning_threshold")
+  displayOrder           Int                     @default(0) @map("display_order")
+  isPopular              Boolean                 @default(false) @map("is_popular")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  serviceCenterOfferings ServiceCenterOffering[]
+  serviceComponents      ServiceTypeComponent[]
+  servicePackages        ServicePackageItem[]
+
+  @@unique([name, categoryId])
+  @@index([categoryId, isPopular])
+  @@map("service_type")
+}
+
+// Components that make up a service type
+model ServiceComponent {
+  serviceComponentId    String                 @id @default(dbgenerated("gen_random_uuid()")) @map("service_component_id") @db.Uuid
+  name                  String                 @unique @db.VarChar(255)
+  description           String?                @db.VarChar(255)
+  estimatedDuration     Int?                   @map("estimated_duration")
+  vehicleType           VehicleType?           @default(NONE) @map("vehicle_type")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  serviceTypeComponents ServiceTypeComponent[]
+
+  @@map("service_component")
+}
+
+// Many-to-many relationship between ServiceType and ServiceComponent
+model ServiceTypeComponent {
+  serviceTypeComponentId String           @id @default(dbgenerated("gen_random_uuid()")) @map("service_type_component_id") @db.Uuid
+  serviceTypeId          String           @map("service_type_id") @db.Uuid // Added @db.Uuid to match ServiceType
+  serviceType            ServiceType      @relation(fields: [serviceTypeId], references: [serviceTypeId], onDelete: Cascade)
+  serviceComponentId     String           @map("service_component_id") @db.Uuid
+  serviceComponent       ServiceComponent @relation(fields: [serviceComponentId], references: [serviceComponentId], onDelete: Cascade)
+  isDefault              Boolean          @default(true) @map("is_default")
+  isRequired             Boolean          @default(false) @map("is_required")
+  additionalPrice        Decimal?         @map("additional_price") @db.Decimal(10, 2)
+  createdAt              DateTime         @default(now()) @map("created_at")
+  updatedAt              DateTime         @updatedAt @map("updated_at")
+
+  @@unique([serviceTypeId, serviceComponentId])
+  @@map("service_type_component")
+}
+
+// Service Offering by a Service Center
+model ServiceCenterOffering {
+  serviceCenterOfferingId      String                        @id @default(dbgenerated("gen_random_uuid()")) @map("service_center_offering_id") @db.Uuid
+  serviceCenterId              String                        @map("service_center_id")
+  serviceCenter                ServiceCenter                 @relation(fields: [serviceCenterId], references: [id], onDelete: Cascade)
+  serviceTypeId                String                        @map("service_type_id") @db.Uuid // Added @db.Uuid to match ServiceType
+  serviceType                  ServiceType                   @relation(fields: [serviceTypeId], references: [serviceTypeId])
+  status                       ServiceStatus                 @default(ACTIVE)
+  basePrice                    Decimal                       @map("base_price") @db.Decimal(10, 2)
+  discountPercentage           Decimal?                      @map("discount_percentage") @db.Decimal(5, 2)
+  discountAbsolute             Decimal?                      @map("discount_absolute") @db.Decimal(10, 2)
+  discountValidUntil           DateTime?                     @map("discount_valid_until")
+  timeToComplete               Int?                          @map("time_to_complete")
+  availablePriorities          ServicePriority[]             @default([NORMAL]) @map("available_priorities")
+  priorityPrices               Json?                         @map("priority_prices")
+  minimumAdvanceBooking        Int?                          @map("minimum_advance_booking")
+  termsAndConditions           String?                       @map("terms_and_conditions") @db.Text
+  paymentPolicy                PaymentPolicy                 @default(PAYMENT_AFTER_SERVICE) @map("payment_policy")
+  warrantyDays                 Int?                          @map("warranty_days")
+  warrantyKilometers           Int?                          @map("warranty_kilometers")
+  isHighlighted                Boolean                       @default(false) @map("is_highlighted")
+  hasPickupDropService         Boolean                       @default(false) @map("has_pickup_drop_service")
+  pickupDropFee                Decimal?                      @map("pickup_drop_fee") @db.Decimal(10, 2)
+  hasEmergencyService          Boolean                       @default(false) @map("has_emergency_service")
+  emergencyServiceFee          Decimal?                      @map("emergency_service_fee") @db.Decimal(10, 2)
+  rating                       Decimal?                      @db.Decimal(3, 2)
+  reviewCount                  Int                           @default(0) @map("review_count")
+  createdAt                    DateTime                      @default(now()) @map("created_at")
+  updatedAt                    DateTime                      @updatedAt @map("updated_at")
+  vehicleBrandServiceOfferings VehicleBrandServiceOffering[]
+  additionalFeatures           AdditionalFeature[]
+  serviceTaxes                 ServiceOfferingTax[]
+  servicePackages              ServicePackageOffering[]
+  seasonalDiscounts            SeasonalDiscount[]
+
+  @@unique([serviceCenterId, serviceTypeId])
+  @@index([status, serviceTypeId])
+  @@index([hasEmergencyService, status])
+  @@index([hasPickupDropService, status])
+  @@map("service_center_offering")
+}
+
+// Model to represent services offered for specific vehicle brands and models
+model VehicleBrandServiceOffering {
+  vehicleBrandServiceOfferingId String                @id @default(dbgenerated("gen_random_uuid()")) @map("vehicle_brand_service_offering_id") @db.Uuid
+  offeringId                    String                @map("offering_id") @db.Uuid // Added @db.Uuid to match ServiceCenterOffering
+  offering                      ServiceCenterOffering @relation(fields: [offeringId], references: [serviceCenterOfferingId], onDelete: Cascade)
+  brandId                       String                @map("brand_id")
+  brand                         Brand                 @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  modelId                       String?               @map("model_id")
+  model                         Model?                @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  manufactureYearStart          Int?                  @map("manufacture_year_start")
+  manufactureYearEnd            Int?                  @map("manufacture_year_end")
+  fuelType                      String?               @map("fuel_type")
+  status                        ServiceStatus         @default(ACTIVE)
+  price                         Decimal?              @db.Decimal(10, 2)
+  discountPercentage            Decimal?              @map("discount_percentage") @db.Decimal(5, 2)
+  timeToComplete                Int?                  @map("time_to_complete")
+  specialNotes                  String?               @map("special_notes") @db.Text
+  partsIncluded                 Boolean               @default(true) @map("parts_included")
+  createdAt                     DateTime              @default(now()) @map("created_at")
+  updatedAt                     DateTime              @updatedAt @map("updated_at")
+
+  @@unique([offeringId, brandId, modelId, fuelType])
+  @@index([brandId, modelId, status])
+  @@map("vehicle_brand_service_offering")
+}
+
+// Additional features or benefits offered as part of a service
+model AdditionalFeature {
+  additionalFeatureId String                @id @default(dbgenerated("gen_random_uuid()")) @map("additional_feature_id") @db.Uuid
+  offeringId          String                @map("offering_id") @db.Uuid // Added @db.Uuid to match ServiceCenterOffering
+  offering            ServiceCenterOffering @relation(fields: [offeringId], references: [serviceCenterOfferingId], onDelete: Cascade)
+  name                String
+  description         String?
+  isComplimentary     Boolean               @default(false) @map("is_complimentary")
+  price               Decimal?              @db.Decimal(10, 2)
+  displayIcon         String?               @map("display_icon")
+  isPopular           Boolean               @default(false) @map("is_popular")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+
+  @@unique([offeringId, name])
+  @@map("additional_feature")
+}
+
+// Service package bundling multiple services together
+model ServicePackage {
+  servicePackageId String                   @id @default(dbgenerated("gen_random_uuid()")) @map("service_package_id") @db.Uuid
+  name             String
+  description      String?
+  longDescription  String?                  @map("long_description") @db.Text
+  packageType      PackageType              @default(ONE_TIME) @map("package_type")
+  durationDays     Int?                     @map("duration_days")
+  vehicleType      VehicleType              @map("vehicle_type")
+  displayImage     String?                  @map("display_image")
+  isPopular        Boolean                  @default(false) @map("is_popular")
+  createdAt        DateTime                 @default(now()) @map("created_at")
+  updatedAt        DateTime                 @updatedAt @map("updated_at")
+  packageItems     ServicePackageItem[]
+  packageOfferings ServicePackageOffering[]
+
+  @@unique([name, vehicleType, packageType])
+  @@map("service_package")
+}
+
+// Items included in a service package
+model ServicePackageItem {
+  servicePackageItemId String         @id @default(dbgenerated("gen_random_uuid()")) @map("service_package_item_id") @db.Uuid
+  packageId            String         @map("package_id") @db.Uuid // Added @db.Uuid to match ServicePackage
+  package              ServicePackage @relation(fields: [packageId], references: [servicePackageId], onDelete: Cascade)
+  serviceTypeId        String         @map("service_type_id") @db.Uuid // Added @db.Uuid to match ServiceType
+  serviceType          ServiceType    @relation(fields: [serviceTypeId], references: [serviceTypeId])
+  quantity             Int            @default(1)
+  isRequired           Boolean        @default(true) @map("is_required")
+  displayOrder         Int            @default(0) @map("display_order")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  @@unique([packageId, serviceTypeId])
+  @@map("service_package_item")
+}
+
+// Service package offerings by service centers
+model ServicePackageOffering {
+  servicePackageOfferingId String                @id @default(dbgenerated("gen_random_uuid()")) @map("service_package_offering_id") @db.Uuid
+  packageId                String                @map("package_id") @db.Uuid // Added @db.Uuid to match ServicePackage
+  package                  ServicePackage        @relation(fields: [packageId], references: [servicePackageId])
+  serviceCenterId          String                @map("service_center_id")
+  offeringId               String                @map("offering_id") @db.Uuid // Added @db.Uuid to match ServiceCenterOffering
+  offering                 ServiceCenterOffering @relation(fields: [offeringId], references: [serviceCenterOfferingId], onDelete: Cascade)
+  status                   ServiceStatus         @default(ACTIVE)
+  basePrice                Decimal               @map("base_price") @db.Decimal(10, 2)
+  discountPercentage       Decimal?              @map("discount_percentage") @db.Decimal(5, 2)
+  discountValidUntil       DateTime?             @map("discount_valid_until")
+  termsAndConditions       String?               @map("terms_and_conditions") @db.Text
+  createdAt                DateTime              @default(now()) @map("created_at")
+  updatedAt                DateTime              @updatedAt @map("updated_at")
+
+  @@unique([packageId, serviceCenterId])
+  @@map("service_package_offering")
+}
+
+// Seasonal or promotional discounts
+model SeasonalDiscount {
+  seasonalDiscountId String                @id @default(dbgenerated("gen_random_uuid()")) @map("seasonal_discount_id") @db.Uuid
+  name               String
+  description        String?
+  offeringId         String                @map("offering_id") @db.Uuid // Added @db.Uuid to match ServiceCenterOffering
+  offering           ServiceCenterOffering @relation(fields: [offeringId], references: [serviceCenterOfferingId], onDelete: Cascade)
+  startDate          DateTime              @map("start_date")
+  endDate            DateTime              @map("end_date")
+  discountPercentage Decimal?              @map("discount_percentage") @db.Decimal(5, 2)
+  discountAbsolute   Decimal?              @map("discount_absolute") @db.Decimal(10, 2)
+  promoCode          String?               @map("promo_code")
+  isActive           Boolean               @default(true) @map("is_active")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+
+  @@index([startDate, endDate, isActive])
+  @@map("seasonal_discount")
+}
+
+// Taxes applicable to services
+model ServiceOfferingTax {
+  serviceOfferingTaxId String                @id @default(dbgenerated("gen_random_uuid()")) @map("service_offering_tax_id") @db.Uuid
+  offeringId           String                @map("offering_id") @db.Uuid // Added @db.Uuid to match ServiceCenterOffering
+  offering             ServiceCenterOffering @relation(fields: [offeringId], references: [serviceCenterOfferingId], onDelete: Cascade)
+  name                 String
+  percentage           Decimal               @db.Decimal(5, 2)
+  description          String?
+  isIncluded           Boolean               @default(false) @map("is_included")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+
+  @@unique([offeringId, name])
+  @@map("service_offering_tax")
+}
