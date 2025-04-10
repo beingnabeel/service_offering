@@ -12,7 +12,12 @@ const { uploadServiceCategoryIcon } = require("../middlewares/uploadMiddleware")
  * @desc Create a new service category
  * @access Private
  */
-// Define the create category route
+/**
+ * @route GET /api/v1/categories
+ * @desc Get all service categories with filters, pagination, etc.
+ * @access Public
+ */
+// Define the routes
 router.route('/')
   .post(
     // First handle the file upload
@@ -22,6 +27,10 @@ router.route('/')
     validate(validateServiceCategory),
     // Finally process the request
     serviceCategoryController.createCategory
+  )
+  .get(
+    // Get all service categories with filtering, pagination, etc.
+    serviceCategoryController.getAllCategories
   );
 
 module.exports = router;
