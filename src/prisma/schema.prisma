@@ -85,29 +85,29 @@ model Model {
 }
 
 model Address {
-  id             String         @id @default(dbgenerated("gen_random_uuid()"))
-  street         String
-  city           String
-  state          String
-  country        String
-  postalCode     String
-  landmark       String?
-  additionalInfo String?
-  longitude      Float
-  latitude       Float
-  isVerified     Boolean        @default(false)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  serviceCenter  ServiceCenter?
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) // Standardized UUID generation
+  street          String
+  city            String
+  state           String
+  country         String
+  postalCode      String
+  landmark        String?
+  additionalInfo  String?
+  longitude       Float
+  latitude        Float
+  isVerified      Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  // Relation to service center
+  serviceCenter   ServiceCenter @relation(fields: [serviceCenterId], references: [id], onDelete: Cascade)
+  serviceCenterId String        @unique
 }
 
 model ServiceCenter {
   id                     String                  @id @default(dbgenerated("gen_random_uuid()"))
   name                   String
-  brand                  Brand                   @relation(fields: [brandId], references: [id])
-  brandId                String
-  addressId              String                  @unique
-  address                Address                 @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  brand                  Brand                   @relation(fields: [brandId], references: [id], onDelete: Cascade) // Ensure proper relation
+  brandId                String // Foreign key for Brand
   phone                  String
   alternatePhone         String?
   email                  String?
@@ -123,6 +123,7 @@ model ServiceCenter {
   slots                  Slot[]
   operatingHours         OperatingHours[]
   serviceCenterOfferings ServiceCenterOffering[]
+  Address                Address[]
 }
 
 model OperatingHours {

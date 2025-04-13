@@ -6,9 +6,14 @@ const winston = require("winston");
 const AppError = require("./src/utils/appError");
 const globalErrorHandler = require("./src/controllers/errorController");
 const { requestLogger, errorLogger } = require("./src/utils/logger");
-const { logRequest, logPerformance, logError } = require('./src/middlewares/loggerMiddleware');
-const routes = require('./src/routes');
-
+const {
+  logRequest,
+  logPerformance,
+  logError,
+} = require("./src/middlewares/loggerMiddleware");
+const requestIdMiddleware = require("./src/middlewares/requestIdMiddleware");
+// Mount API routes
+const apiRoutes = require("./src/routes/index");
 const app = express();
 
 const corsOptions = {
@@ -19,6 +24,7 @@ const corsOptions = {
 };
 
 // Global middlewares
+app.use(requestIdMiddleware); // Add request ID to each request first
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,8 +33,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(logRequest);
 app.use(logPerformance);
 
-// Mount API routes
-const apiRoutes = require('./src/routes/index');
 app.use(apiRoutes);
 
 // Handle unhandled routes

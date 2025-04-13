@@ -2,50 +2,48 @@ const prisma = require("../models/index");
 const AppError = require("../utils/appError");
 const ApiFeatures = require("../utils/apiFeatures");
 const { logger } = require("../utils/logger");
+const axios = require("axios");
+const INJECTION_SERVICE_URL =
+  process.env.INJECTION_SERVICE_URL || "http://localhost:5001";
 
 const createServiceType = async (typeData) => {
   try {
     logger.info({
-      message: "Creating new service type",
+      message: "Forwarding service type creation to Injection Service",
       metadata: { serviceName: typeData.name },
     });
-
-    const serviceType = await prisma.serviceType.create({
-      data: {
-        name: typeData.name,
-        description: typeData.description,
-        longDescription: typeData.longDescription,
-        estimatedDuration: parseInt(typeData.estimatedDuration, 10),
-        displayImage: typeData.displayImage,
-        categoryId: typeData.categoryId,
-        recommendedFrequency: typeData.recommendedFrequency,
-        warningThreshold: parseInt(typeData.warningThreshold, 10),
-        displayOrder:
-          typeData.displayOrder !== undefined
-            ? parseInt(typeData.displayOrder)
-            : 0,
-        isPopular: typeData.isPopular === "true" || typeData.isPopular === true,
-      },
-    });
+    const response = await axios.post(
+      `${INJECTION_SERVICE_URL}/api/v1/types`,
+      typeData
+    );
+    const serviceType = response.data.data;
 
     logger.info({
-      message: "Service type created successfully",
+      message: "Service type created successfully via Injection Service",
       metadata: { serviceTypeId: serviceType.serviceTypeId },
     });
 
     return serviceType;
   } catch (error) {
     logger.error({
-      message: "Error creating service type",
-      metadata: { error: error.message, stack: error.stack },
+      message: "Error creating service type via Injection Service",
+      metadata: {
+        error: error.response?.data?.message || error.message,
+        stack: error.stack,
+      },
     });
-    if (error.code === "P2002") {
+
+    if (error.response?.status === 409) {
       throw new AppError(
         "A service type with this name and category already exists",
         409
       );
     }
-    throw error;
+
+    throw new AppError(
+      error.response?.data?.message || "Failed to create service type",
+      error.response?.status || 500
+    );
   }
 };
 

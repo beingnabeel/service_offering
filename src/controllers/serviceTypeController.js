@@ -29,6 +29,10 @@ const createType = catchAsync(async (req, res, next) => {
   }
 
   const serviceType = await serviceTypeService.createServiceType(typeData);
+
+  if (!serviceType) {
+    return next(new AppError("Failed to create service type", 500));
+  }
   res
     .status(201)
     .json(formatSuccess(serviceType, "Service type created successfully", 201));

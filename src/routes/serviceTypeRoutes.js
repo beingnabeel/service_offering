@@ -14,5 +14,6 @@ router.route("/").post(
   // Finally process the request
   serviceTypeController.createType
 );
+// .get(serviceTypeController.getAllTypes);
 
 module.exports = router;
