@@ -5,9 +5,9 @@
 const {
   logger,
   errorLogger,
-  requestLogger,
-  performanceLogger,
-  generateRequestId
+  // requestLogger,
+  // performanceLogger,
+  generateRequestId,
 } = require('../utils/logger');
 
 /**
@@ -17,7 +17,7 @@ const logRequest = (req, res, next) => {
   // Generate unique request ID and attach to request object
   const requestId = generateRequestId(req);
   req.requestId = requestId;
-  
+
   // Log request details
   logger.info({
     message: 'Incoming request',
@@ -26,10 +26,10 @@ const logRequest = (req, res, next) => {
       url: req.originalUrl,
       ip: req.ip,
       requestId,
-      userAgent: req.get('user-agent')
-    }
+      userAgent: req.get('user-agent'),
+    },
   });
-  
+
   next();
 };
 
@@ -38,12 +38,12 @@ const logRequest = (req, res, next) => {
  */
 const logPerformance = (req, res, next) => {
   const start = process.hrtime();
-  
+
   // Once response finishes, log performance metrics
   res.on('finish', () => {
     const diff = process.hrtime(start);
     const duration = (diff[0] * 1e9 + diff[1]) / 1e6; // Convert to milliseconds
-    
+
     logger.http({
       message: 'Request completed',
       metadata: {
@@ -51,11 +51,11 @@ const logPerformance = (req, res, next) => {
         url: req.originalUrl,
         status: res.statusCode,
         duration: `${duration.toFixed(2)}ms`,
-        requestId: req.requestId
-      }
+        requestId: req.requestId,
+      },
     });
   });
-  
+
   next();
 };
 
@@ -70,5 +70,5 @@ const logError = (err, req, res, next) => {
 module.exports = {
   logRequest,
   logPerformance,
-  logError
+  logError,
 };

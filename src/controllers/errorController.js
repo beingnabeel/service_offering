@@ -8,7 +8,12 @@ const { Prisma } = require('@prisma/client');
 const PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
 const PrismaClientValidationError = Prisma.PrismaClientValidationError;
 const AppError = require('../utils/appError');
-const { formatError, formatAppError, formatPrismaError, formatJoiError } = require('../utils/responseFormatter');
+const {
+  formatError,
+  formatAppError,
+  formatPrismaError,
+  formatJoiError,
+} = require('../utils/responseFormatter');
 const { logger } = require('../utils/logger');
 
 /**
@@ -26,20 +31,22 @@ const handlePrismaError = (err, req, res) => {
         code: err.code,
         message: err.message,
         stack: err.stack,
-        meta: err.meta
+        meta: err.meta,
       },
       request: {
         method: req.method,
         url: req.originalUrl,
         query: req.query,
         params: req.params,
-        requestId: req.requestId
-      }
-    }
+        requestId: req.requestId,
+      },
+    },
   });
 
   // Format and send the response
-  res.status(err instanceof PrismaClientValidationError ? 400 : 500).json(formatPrismaError(err));
+  res
+    .status(err instanceof PrismaClientValidationError ? 400 : 500)
+    .json(formatPrismaError(err));
 };
 
 /**
@@ -56,15 +63,15 @@ const handleJoiValidationError = (err, req, res) => {
         name: err.name,
         details: err.details,
         message: err.message,
-        stack: err.stack
+        stack: err.stack,
       },
       request: {
         method: req.method,
         url: req.originalUrl,
         body: req.body,
-        requestId: req.requestId
-      }
-    }
+        requestId: req.requestId,
+      },
+    },
   });
 
   // Format and send the response
@@ -84,20 +91,22 @@ const handleJWTError = (err, req, res) => {
       error: {
         name: err.name,
         message: err.message,
-        stack: err.stack
+        stack: err.stack,
       },
       request: {
         method: req.method,
         url: req.originalUrl,
-        requestId: req.requestId
-      }
-    }
+        requestId: req.requestId,
+      },
+    },
   });
 
   // Format and send the response
-  res.status(401).json(
-    formatError('Invalid token. Please log in again!', 401, 'INVALID_TOKEN')
-  );
+  res
+    .status(401)
+    .json(
+      formatError('Invalid token. Please log in again!', 401, 'INVALID_TOKEN'),
+    );
 };
 
 /**
@@ -114,20 +123,26 @@ const handleJWTExpiredError = (err, req, res) => {
         name: err.name,
         message: err.message,
         stack: err.stack,
-        expiredAt: err.expiredAt
+        expiredAt: err.expiredAt,
       },
       request: {
         method: req.method,
         url: req.originalUrl,
-        requestId: req.requestId
-      }
-    }
+        requestId: req.requestId,
+      },
+    },
   });
 
   // Format and send the response
-  res.status(401).json(
-    formatError('Your token has expired. Please log in again.', 401, 'EXPIRED_TOKEN')
-  );
+  res
+    .status(401)
+    .json(
+      formatError(
+        'Your token has expired. Please log in again.',
+        401,
+        'EXPIRED_TOKEN',
+      ),
+    );
 };
 
 /**
@@ -148,7 +163,7 @@ const handleAppError = (err, req, res) => {
         code: err.code,
         details: err.details,
         stack: err.stack,
-        isOperational: err.isOperational
+        isOperational: err.isOperational,
       },
       request: {
         method: req.method,
@@ -156,9 +171,9 @@ const handleAppError = (err, req, res) => {
         query: req.query,
         params: req.params,
         body: req.method !== 'GET' ? req.body : undefined,
-        requestId: req.requestId
-      }
-    }
+        requestId: req.requestId,
+      },
+    },
   });
 
   // Format and send the response
@@ -178,7 +193,7 @@ const handleUnknownError = (err, req, res) => {
       error: {
         name: err.name,
         message: err.message,
-        stack: err.stack
+        stack: err.stack,
       },
       request: {
         method: req.method,
@@ -186,9 +201,9 @@ const handleUnknownError = (err, req, res) => {
         query: req.query,
         params: req.params,
         body: req.method !== 'GET' ? req.body : undefined,
-        requestId: req.requestId
-      }
-    }
+        requestId: req.requestId,
+      },
+    },
   });
 
   // In development, send detailed error
@@ -199,20 +214,20 @@ const handleUnknownError = (err, req, res) => {
       stack: err.stack,
       error: err,
       timestamp: new Date().toISOString(),
-      requestId: req.requestId
+      requestId: req.requestId,
     });
   } else {
     // In production, send generic error
-    res.status(500).json(
-      formatError('Something went wrong', 500, 'INTERNAL_ERROR')
-    );
+    res
+      .status(500)
+      .json(formatError('Something went wrong', 500, 'INTERNAL_ERROR'));
   }
 };
 
 /**
  * Global error handling middleware for Express
  */
-module.exports = (err, req, res, next) => {
+module.exports = (err, req, res) => {
   // Make sure the response status is set
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
@@ -227,7 +242,7 @@ module.exports = (err, req, res, next) => {
     // Custom application error
     handleAppError(err, req, res);
   } else if (
-    err instanceof PrismaClientKnownRequestError || 
+    err instanceof PrismaClientKnownRequestError ||
     err instanceof PrismaClientValidationError
   ) {
     // Prisma database errors

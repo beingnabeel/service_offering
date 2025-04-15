@@ -1,15 +1,15 @@
 // src/middlewares/uploadMiddleware.js
-const multer = require("multer");
-const path = require("path");
-const AWS = require("aws-sdk");
-const { v4: uuidv4 } = require("uuid");
-const AppError = require("../utils/appError");
+const multer = require('multer');
+const path = require('path');
+const AWS = require('aws-sdk');
+const { v4: uuidv4 } = require('uuid');
+const AppError = require('../utils/appError');
 
 // Configure AWS S3
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION || "us-east-1",
+  region: process.env.AWS_REGION || 'us-east-1',
 });
 
 // Configure multer for memory storage
@@ -19,13 +19,13 @@ const storage = multer.memoryStorage();
 const imageFileFilter = (req, file, cb) => {
   // Check both MIME type and file extension
   const fileExtension = path.extname(file.originalname).toLowerCase();
-  const allowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
   const allowedMimes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
   ];
 
   if (
@@ -36,10 +36,10 @@ const imageFileFilter = (req, file, cb) => {
   } else {
     cb(
       new AppError(
-        "Invalid file format. Please upload only image files (.jpg, .jpeg, .png, .gif, .webp, .svg).",
-        400
+        'Invalid file format. Please upload only image files (.jpg, .jpeg, .png, .gif, .webp, .svg).',
+        400,
       ),
-      false
+      false,
     );
   }
 };
@@ -54,7 +54,7 @@ const upload = multer({
 });
 
 // Helper function to upload a file to S3
-const uploadToS3 = (file, folder = "general") => {
+const uploadToS3 = (file, folder = 'general') => {
   return new Promise((resolve, reject) => {
     // Generate unique filename
     const fileExtension = path.extname(file.originalname);
@@ -74,7 +74,7 @@ const uploadToS3 = (file, folder = "general") => {
     s3.upload(params, (err, data) => {
       if (err) {
         return reject(
-          new AppError(`Error uploading to S3: ${err.message}`, 500)
+          new AppError(`Error uploading to S3: ${err.message}`, 500),
         );
       }
 
@@ -101,7 +101,7 @@ const deleteFromS3 = (key) => {
     s3.deleteObject(params, (err, data) => {
       if (err) {
         return reject(
-          new AppError(`Error deleting from S3: ${err.message}`, 500)
+          new AppError(`Error deleting from S3: ${err.message}`, 500),
         );
       }
       resolve(data);
@@ -110,7 +110,7 @@ const deleteFromS3 = (key) => {
 };
 
 // Middleware for handling single image upload and saving to S3
-const uploadSingleImage = (fieldName, folder = "general") => {
+const uploadSingleImage = (fieldName, folder = 'general') => {
   return [
     // First use multer to handle the upload
     upload.single(fieldName),
@@ -136,7 +136,7 @@ const uploadSingleImage = (fieldName, folder = "general") => {
 };
 
 // Middleware for handling multiple image uploads
-const uploadMultipleImages = (fieldName, maxCount = 5, folder = "general") => {
+const uploadMultipleImages = (fieldName, maxCount = 5, folder = 'general') => {
   return [
     // First use multer to handle the uploads
     upload.array(fieldName, maxCount),
@@ -150,7 +150,7 @@ const uploadMultipleImages = (fieldName, maxCount = 5, folder = "general") => {
 
         // Upload each file to S3
         const uploadPromises = req.files.map((file) =>
-          uploadToS3(file, folder)
+          uploadToS3(file, folder),
         );
         const filesData = await Promise.all(uploadPromises);
 
@@ -166,14 +166,14 @@ const uploadMultipleImages = (fieldName, maxCount = 5, folder = "general") => {
 
 // Service-specific folder configurations
 const folders = {
-  serviceCategory: "service-categories",
-  serviceType: "service-types",
-  serviceComponent: "service-components",
-  serviceOffering: "service-offerings",
-  additionalFeature: "additional-features",
-  servicePackage: "service-packages",
-  sparePart: "spare-parts",
-  serviceTemplate: "service-templates",
+  serviceCategory: 'service-categories',
+  serviceType: 'service-types',
+  serviceComponent: 'service-components',
+  serviceOffering: 'service-offerings',
+  additionalFeature: 'additional-features',
+  servicePackage: 'service-packages',
+  sparePart: 'spare-parts',
+  serviceTemplate: 'service-templates',
 };
 
 // Export the configured upload middleware and helpers
@@ -186,25 +186,25 @@ module.exports = {
   deleteFromS3,
 
   // Pre-configured middlewares for different entities
-  uploadServiceCategoryIcon: uploadSingleImage("icon", folders.serviceCategory),
+  uploadServiceCategoryIcon: uploadSingleImage('icon', folders.serviceCategory),
   uploadServiceTypeImage: uploadSingleImage(
-    "displayImage",
-    folders.serviceType
+    'displayImage',
+    folders.serviceType,
   ),
   uploadServiceOfferingImages: uploadMultipleImages(
-    "images",
+    'images',
     10,
-    folders.serviceOffering
+    folders.serviceOffering,
   ),
   uploadAdditionalFeatureIcon: uploadSingleImage(
-    "displayIcon",
-    folders.additionalFeature
+    'displayIcon',
+    folders.additionalFeature,
   ),
   uploadServicePackageImage: uploadSingleImage(
-    "displayImage",
-    folders.servicePackage
+    'displayImage',
+    folders.servicePackage,
   ),
-  uploadSparePartImage: uploadSingleImage("image", folders.sparePart),
+  uploadSparePartImage: uploadSingleImage('image', folders.sparePart),
 
   // Generic uploads with custom folder
   uploadSingleImage,

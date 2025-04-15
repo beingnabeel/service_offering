@@ -1,6 +1,6 @@
-const { validationResult } = require("express-validator");
-const AppError = require("../utils/appError");
-const { logger } = require("../utils/logger");
+const { validationResult } = require('express-validator');
+const AppError = require('../utils/appError');
+const { logger } = require('../utils/logger');
 
 /**
  * Middleware to validate requests based on defined validation rules
@@ -28,7 +28,10 @@ const validate = (validations) => {
         } else if (Array.isArray(formattedErrors[error.path])) {
           formattedErrors[error.path].push(error.msg);
         } else {
-          formattedErrors[error.path] = [formattedErrors[error.path], error.msg];
+          formattedErrors[error.path] = [
+            formattedErrors[error.path],
+            error.msg,
+          ];
         }
       });
 
@@ -41,9 +44,9 @@ const validate = (validations) => {
             method: req.method,
             url: req.originalUrl,
             body: req.method !== 'GET' ? req.body : undefined,
-            requestId: req.requestId || 'unknown'
-          }
-        }
+            requestId: req.requestId || 'unknown',
+          },
+        },
       });
 
       // Throw a validation error using our AppError class
@@ -54,23 +57,23 @@ const validate = (validations) => {
       if (error instanceof AppError) {
         return next(error);
       }
-      
+
       // For other errors during validation, convert to an AppError
       logger.error({
         message: 'Error during validation',
         metadata: {
           error: {
             message: error.message,
-            stack: error.stack
+            stack: error.stack,
           },
           request: {
             method: req.method,
             url: req.originalUrl,
-            requestId: req.requestId || 'unknown'
-          }
-        }
+            requestId: req.requestId || 'unknown',
+          },
+        },
       });
-      
+
       return next(AppError.internal('Error processing validation'));
     }
   };
@@ -84,8 +87,10 @@ const validate = (validations) => {
 const validateQuery = (schema) => {
   return (req, res, next) => {
     try {
-      const { error, value } = schema.validate(req.query, { abortEarly: false });
-      
+      const { error, value } = schema.validate(req.query, {
+        abortEarly: false,
+      });
+
       if (error) {
         const validationErrors = {};
         error.details.forEach((detail) => {
@@ -107,14 +112,17 @@ const validateQuery = (schema) => {
               method: req.method,
               url: req.originalUrl,
               query: req.query,
-              requestId: req.requestId || 'unknown'
-            }
-          }
+              requestId: req.requestId || 'unknown',
+            },
+          },
         });
 
-        throw AppError.validationError('Query validation failed', validationErrors);
+        throw AppError.validationError(
+          'Query validation failed',
+          validationErrors,
+        );
       }
-      
+
       // Replace req.query with validated and sanitized values
       req.query = value;
       return next();
@@ -123,7 +131,7 @@ const validateQuery = (schema) => {
       if (error instanceof AppError) {
         return next(error);
       }
-      
+
       // For other errors during validation, convert to an AppError
       return next(AppError.internal('Error processing query validation'));
     }
@@ -132,5 +140,5 @@ const validateQuery = (schema) => {
 
 module.exports = {
   validate,
-  validateQuery
+  validateQuery,
 };

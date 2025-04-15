@@ -14,7 +14,7 @@ class AppError extends Error {
     super(message);
 
     this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
     this.isOperational = true; // Indicates if this is a known operational error
     this.code = errorCode;
     this.details = details;
@@ -52,7 +52,11 @@ class AppError extends Error {
    * @param {Object|null} details - Error details
    * @returns {AppError} AppError instance
    */
-  static badRequest(message = 'Bad request', code = 'BAD_REQUEST', details = null) {
+  static badRequest(
+    message = 'Bad request',
+    code = 'BAD_REQUEST',
+    details = null,
+  ) {
     return new AppError(message, 400, code, details);
   }
 
@@ -133,9 +137,9 @@ class AppError extends Error {
     switch (prismaErrorCode) {
       case 'P2002': // Unique constraint violation
         appError = AppError.conflict(
-          `A record with this ${meta.target?.join(', ')} already exists`, 
+          `A record with this ${meta.target?.join(', ')} already exists`,
           'UNIQUE_CONSTRAINT_VIOLATION',
-          { fields: meta.target }
+          { fields: meta.target },
         );
         break;
 
@@ -143,14 +147,14 @@ class AppError extends Error {
         appError = AppError.badRequest(
           `Invalid relation: ${meta.field_name}`,
           'FOREIGN_KEY_VIOLATION',
-          { field: meta.field_name }
+          { field: meta.field_name },
         );
         break;
 
       case 'P2025': // Record not found
         appError = AppError.notFound(
           meta.cause || 'Record not found',
-          'RECORD_NOT_FOUND'
+          'RECORD_NOT_FOUND',
         );
         break;
 
@@ -158,14 +162,14 @@ class AppError extends Error {
         appError = AppError.badRequest(
           `Required relation violation: ${meta.relation_name}`,
           'REQUIRED_RELATION_VIOLATION',
-          { relation: meta.relation_name }
+          { relation: meta.relation_name },
         );
         break;
 
       case 'P2021': // Table does not exist
         appError = AppError.internal(
           `Table does not exist: ${meta.table}`,
-          'TABLE_NOT_FOUND'
+          'TABLE_NOT_FOUND',
         );
         break;
 
@@ -173,15 +177,15 @@ class AppError extends Error {
         appError = AppError.internal(
           `Column does not exist: ${meta.column}`,
           'COLUMN_NOT_FOUND',
-          { column: meta.column }
+          { column: meta.column },
         );
         break;
-  
+
       case 'P2023': // Inconsistent column data
         appError = AppError.badRequest(
           `Invalid input data for ${meta.column || 'a column'}`,
           'INVALID_COLUMN_DATA',
-          { column: meta.column }
+          { column: meta.column },
         );
         break;
 

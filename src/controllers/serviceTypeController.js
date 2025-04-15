@@ -1,8 +1,8 @@
-const catchAsync = require("../utils/catchAsync");
-const AppError = require("../utils/appError");
-const serviceTypeService = require("../services/serviceTypeService");
-const { formatSuccess, formatError } = require("../utils/responseFormatter");
-const { logger } = require("../utils/logger");
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+const serviceTypeService = require('../services/serviceTypeService');
+const { formatSuccess } = require('../utils/responseFormatter');
+const { logger } = require('../utils/logger');
 
 const createType = catchAsync(async (req, res, next) => {
   const typeData = {
@@ -20,7 +20,7 @@ const createType = catchAsync(async (req, res, next) => {
   if (req.fileData) {
     typeData.displayImage = req.fileData.location;
     logger.info({
-      message: "Service type display image uploaded",
+      message: 'Service type display image uploaded',
       metadata: {
         fileName: req.fileData.originalName,
         fileUrl: req.fileData.location,
@@ -31,11 +31,11 @@ const createType = catchAsync(async (req, res, next) => {
   const serviceType = await serviceTypeService.createServiceType(typeData);
 
   if (!serviceType) {
-    return next(new AppError("Failed to create service type", 500));
+    return next(new AppError('Failed to create service type', 500));
   }
   res
     .status(201)
-    .json(formatSuccess(serviceType, "Service type created successfully", 201));
+    .json(formatSuccess(serviceType, 'Service type created successfully', 201));
 });
 
 module.exports = {

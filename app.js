@@ -1,24 +1,24 @@
-require("dotenv").config();
+require('dotenv').config();
 
-const cors = require("cors");
-const express = require("express");
-const winston = require("winston");
-const AppError = require("./src/utils/appError");
-const globalErrorHandler = require("./src/controllers/errorController");
-const { requestLogger, errorLogger } = require("./src/utils/logger");
+const cors = require('cors');
+const express = require('express');
+// const winston = require('winston');
+const AppError = require('./src/utils/appError');
+const globalErrorHandler = require('./src/controllers/errorController');
+// const { requestLogger, errorLogger } = require('./src/utils/logger');
 const {
   logRequest,
   logPerformance,
   logError,
-} = require("./src/middlewares/loggerMiddleware");
-const requestIdMiddleware = require("./src/middlewares/requestIdMiddleware");
+} = require('./src/middlewares/loggerMiddleware');
+const requestIdMiddleware = require('./src/middlewares/requestIdMiddleware');
 // Mount API routes
-const apiRoutes = require("./src/routes/index");
+const apiRoutes = require('./src/routes/index');
 const app = express();
 
 const corsOptions = {
-  origin: "http://localhost:8085",
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  origin: 'http://localhost:8085',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -36,7 +36,7 @@ app.use(logPerformance);
 app.use(apiRoutes);
 
 // Handle unhandled routes
-app.all("*", (req, res, next) => {
+app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 

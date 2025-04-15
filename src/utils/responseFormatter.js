@@ -16,7 +16,7 @@ const formatSuccess = (data = {}, message = 'Success', statusCode = 200) => {
     statusCode,
     data,
     timestamp: new Date().toISOString(),
-    requestId: global.requestId || null
+    requestId: global.requestId || null,
   };
 };
 
@@ -29,10 +29,10 @@ const formatSuccess = (data = {}, message = 'Success', statusCode = 200) => {
  * @returns {Object} Formatted error response
  */
 const formatError = (
-  message = 'An error occurred', 
-  statusCode = 500, 
+  message = 'An error occurred',
+  statusCode = 500,
   errorCode = 'INTERNAL_ERROR',
-  details = null
+  details = null,
 ) => {
   return {
     success: false,
@@ -41,7 +41,7 @@ const formatError = (
     code: errorCode,
     details,
     timestamp: new Date().toISOString(),
-    requestId: global.requestId || null
+    requestId: global.requestId || null,
   };
 };
 
@@ -65,7 +65,7 @@ const formatAppError = (error) => {
     error.message,
     error.statusCode,
     error.code,
-    error.details
+    error.details,
   );
 };
 
@@ -86,18 +86,15 @@ const formatPrismaError = (error) => {
  * @returns {Object} Formatted validation error response
  */
 const formatJoiError = (error) => {
-  const details = error.details ? error.details.map(detail => ({
-    message: detail.message,
-    path: detail.path,
-    type: detail.type
-  })) : null;
-  
-  return formatError(
-    'Validation failed', 
-    422, 
-    'VALIDATION_ERROR',
-    details
-  );
+  const details = error.details
+    ? error.details.map((detail) => ({
+        message: detail.message,
+        path: detail.path,
+        type: detail.type,
+      }))
+    : null;
+
+  return formatError('Validation failed', 422, 'VALIDATION_ERROR', details);
 };
 
 module.exports = {
@@ -106,5 +103,5 @@ module.exports = {
   formatValidationError,
   formatAppError,
   formatPrismaError,
-  formatJoiError
+  formatJoiError,
 };

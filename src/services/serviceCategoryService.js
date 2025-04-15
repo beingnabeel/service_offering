@@ -1,12 +1,12 @@
-const prisma = require("../models/index");
-const AppError = require("../utils/appError");
-const APIFeatures = require("../utils/apiFeatures");
-const { logger } = require("../utils/logger");
-const axios = require("axios");
+const prisma = require('../models/index');
+const AppError = require('../utils/appError');
+// const APIFeatures = require('../utils/apiFeatures');
+const { logger } = require('../utils/logger');
+const axios = require('axios');
 
 // Injection service base URL
 const INJECTION_SERVICE_URL =
-  process.env.INJECTION_SERVICE_URL || "http://localhost:5001";
+  process.env.INJECTION_SERVICE_URL || 'http://localhost:5001';
 
 /**
  * Create a new service category
@@ -16,27 +16,27 @@ const INJECTION_SERVICE_URL =
 const createServiceCategory = async (categoryData) => {
   try {
     logger.info({
-      message: "Forwarding category creation to Injection Service",
+      message: 'Forwarding category creation to Injection Service',
       metadata: { categoryName: categoryData.name },
     });
 
     // Forward the write operation to the Injection Service
     const response = await axios.post(
       `${INJECTION_SERVICE_URL}/api/v1/categories`,
-      categoryData
+      categoryData,
     );
 
     const serviceCategory = response.data.data;
 
     logger.info({
-      message: "Service category created successfully via Injection Service",
+      message: 'Service category created successfully via Injection Service',
       metadata: { serviceCategoryId: serviceCategory.serviceCategoryId },
     });
 
     return serviceCategory;
   } catch (error) {
     logger.error({
-      message: "Error creating service category via Injection Service",
+      message: 'Error creating service category via Injection Service',
       metadata: {
         error: error.response?.data?.message || error.message,
         stack: error.stack,
@@ -46,14 +46,14 @@ const createServiceCategory = async (categoryData) => {
     // Check for specific error responses from the injection service
     if (error.response?.status === 409) {
       throw new AppError(
-        "A service category with this name and vehicle type already exists",
-        409
+        'A service category with this name and vehicle type already exists',
+        409,
       );
     }
 
     throw new AppError(
-      error.response?.data?.message || "Failed to create service category",
-      error.response?.status || 500
+      error.response?.data?.message || 'Failed to create service category',
+      error.response?.status || 500,
     );
   }
 };
@@ -66,19 +66,19 @@ const createServiceCategory = async (categoryData) => {
 const getAllServiceCategories = async (queryOptions) => {
   try {
     // Import the APIFeatures class
-    const APIFeatures = require("../utils/apiFeatures");
+    const APIFeatures = require('../utils/apiFeatures');
 
     // Define allowed filter fields for service categories
     const ALLOWED_FILTER_FIELDS = [
-      "serviceCategoryId",
-      "name",
-      "description",
-      "vehicleType",
-      "icon",
-      "displayOrder",
-      "isPopular",
-      "createdAt",
-      "updatedAt",
+      'serviceCategoryId',
+      'name',
+      'description',
+      'vehicleType',
+      'icon',
+      'displayOrder',
+      'isPopular',
+      'createdAt',
+      'updatedAt',
     ];
 
     // Helper function to validate if a field is allowed for filtering
@@ -88,14 +88,14 @@ const getAllServiceCategories = async (queryOptions) => {
 
       // Check if it's an operator on an allowed field
       // Example: 'name_contains' or 'createdAt[gte]'
-      if (field.includes("[") && field.includes("]")) {
-        const baseField = field.split("[")[0];
+      if (field.includes('[') && field.includes(']')) {
+        const baseField = field.split('[')[0];
         return ALLOWED_FILTER_FIELDS.includes(baseField);
       }
 
       // Handle standard operator formats like 'createdAt.gte'
-      if (field.includes(".")) {
-        const baseField = field.split(".")[0];
+      if (field.includes('.')) {
+        const baseField = field.split('.')[0];
         return ALLOWED_FILTER_FIELDS.includes(baseField);
       }
 
@@ -112,7 +112,7 @@ const getAllServiceCategories = async (queryOptions) => {
       whereConditions: {},
 
       // Store the orderBy conditions (will be built by the APIFeatures)
-      orderByConditions: [{ createdAt: "desc" }], // Default sorting
+      orderByConditions: [{ createdAt: 'desc' }], // Default sorting
 
       // Store the select conditions (will be built by the APIFeatures)
       selectConditions: undefined,
@@ -170,8 +170,8 @@ const getAllServiceCategories = async (queryOptions) => {
           this.whereConditions = {
             ...this.whereConditions,
             OR: [
-              { name: { contains: searchTerm, mode: "insensitive" } },
-              { description: { contains: searchTerm, mode: "insensitive" } },
+              { name: { contains: searchTerm, mode: 'insensitive' } },
+              { description: { contains: searchTerm, mode: 'insensitive' } },
             ],
           };
         }
@@ -186,7 +186,7 @@ const getAllServiceCategories = async (queryOptions) => {
           });
         } catch (error) {
           // Convert Prisma errors to AppErrors
-          if (error.code && error.code.startsWith("P")) {
+          if (error.code && error.code.startsWith('P')) {
             throw AppError.fromPrismaError(error);
           }
           throw error;
@@ -205,7 +205,7 @@ const getAllServiceCategories = async (queryOptions) => {
           });
         } catch (error) {
           // Convert Prisma errors to AppErrors
-          if (error.code && error.code.startsWith("P")) {
+          if (error.code && error.code.startsWith('P')) {
             throw AppError.fromPrismaError(error);
           }
           throw error;
@@ -247,7 +247,7 @@ const getAllServiceCategories = async (queryOptions) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     logger.info({
-      message: "Retrieved service categories",
+      message: 'Retrieved service categories',
       metadata: { count: serviceCategories.length, totalCount },
     });
 
@@ -265,7 +265,7 @@ const getAllServiceCategories = async (queryOptions) => {
     };
   } catch (error) {
     logger.error({
-      message: "Error retrieving service categories",
+      message: 'Error retrieving service categories',
       metadata: {
         error: error.message,
         code: error.code,
@@ -276,7 +276,7 @@ const getAllServiceCategories = async (queryOptions) => {
     // Convert Prisma errors to AppErrors if not already done
     if (
       error.code &&
-      error.code.startsWith("P") &&
+      error.code.startsWith('P') &&
       !(error instanceof AppError)
     ) {
       throw AppError.fromPrismaError(error);
@@ -285,7 +285,7 @@ const getAllServiceCategories = async (queryOptions) => {
     // If this is not a known operational error, convert it to an internal server error
     if (!(error instanceof AppError)) {
       throw AppError.internal(
-        `Failed to retrieve service categories: ${error.message}`
+        `Failed to retrieve service categories: ${error.message}`,
       );
     }
 
@@ -297,7 +297,7 @@ const getAllServiceCategories = async (queryOptions) => {
 const getServiceCategoryById = async (id) => {
   try {
     logger.info({
-      message: "Fetching service category by id",
+      message: 'Fetching service category by id',
       metadata: { categoryId: id },
     });
 
@@ -307,20 +307,20 @@ const getServiceCategoryById = async (id) => {
 
     if (!serviceCategory) {
       logger.warn({
-        message: "Service category not found",
+        message: 'Service category not found',
         metadata: { categoryId: id },
       });
-      throw new AppError("Service category not found", 404);
+      throw new AppError('Service category not found', 404);
     }
     logger.info({
-      message: "Service category fetched successfully",
+      message: 'Service category fetched successfully',
       metadata: { serviceCategoryId: serviceCategory.serviceCategoryId },
     });
 
     return serviceCategory;
   } catch (error) {
     logger.error({
-      message: "Error fetching service category by id",
+      message: 'Error fetching service category by id',
       metadata: { categoryId: id, error: error.message, stack: error.stack },
     });
     throw error;
@@ -335,27 +335,27 @@ const getServiceCategoryById = async (id) => {
 const updateServiceCategory = async (id, updateData) => {
   try {
     logger.info({
-      message: "Forwarding category update to Injection Service",
+      message: 'Forwarding category update to Injection Service',
       metadata: { categoryId: id, updateData },
     });
 
     // Forward the update operation to the Injection Service
     const response = await axios.patch(
       `${INJECTION_SERVICE_URL}/api/v1/categories/${id}`,
-      updateData
+      updateData,
     );
 
     const updatedCategory = response.data.data;
 
     logger.info({
-      message: "Service category updated successfully via Injection Service",
+      message: 'Service category updated successfully via Injection Service',
       metadata: { serviceCategoryId: updatedCategory.serviceCategoryId },
     });
 
     return updatedCategory;
   } catch (error) {
     logger.error({
-      message: "Error updating service category via Injection Service",
+      message: 'Error updating service category via Injection Service',
       metadata: {
         error: error.response?.data?.message || error.message,
         stack: error.stack,
@@ -364,17 +364,17 @@ const updateServiceCategory = async (id, updateData) => {
 
     // Check for specific error responses from the injection service
     if (error.response?.status === 404) {
-      throw new AppError("Service category not found", 404);
+      throw new AppError('Service category not found', 404);
     } else if (error.response?.status === 409) {
       throw new AppError(
-        "A service category with this name and vehicle type already exists",
-        409
+        'A service category with this name and vehicle type already exists',
+        409,
       );
     }
 
     throw new AppError(
-      error.response?.data?.message || "Failed to update service category",
-      error.response?.status || 500
+      error.response?.data?.message || 'Failed to update service category',
+      error.response?.status || 500,
     );
   }
 };
@@ -387,7 +387,7 @@ const updateServiceCategory = async (id, updateData) => {
 const deleteServiceCategory = async (id) => {
   try {
     logger.info({
-      message: "Forwarding category deletion to Injection Service",
+      message: 'Forwarding category deletion to Injection Service',
       metadata: { categoryId: id },
     });
 
@@ -397,14 +397,14 @@ const deleteServiceCategory = async (id) => {
     // );
     await axios.delete(`${INJECTION_SERVICE_URL}/api/v1/categories/${id}`);
     logger.info({
-      message: "Service category deleted successfully via Injection Service",
+      message: 'Service category deleted successfully via Injection Service',
       metadata: { serviceCategoryId: id },
     });
 
     return true;
   } catch (error) {
     logger.error({
-      message: "Error deleting service category via Injection Service",
+      message: 'Error deleting service category via Injection Service',
       metadata: {
         error: error.response?.data?.message || error.message,
         stack: error.stack,
@@ -413,17 +413,17 @@ const deleteServiceCategory = async (id) => {
 
     // Check for specific error responses from the injection service
     if (error.response?.status === 404) {
-      throw new AppError("Service category not found", 404);
+      throw new AppError('Service category not found', 404);
     } else if (error.response?.status === 400) {
       throw new AppError(
-        "Cannot delete category with associated service types",
-        400
+        'Cannot delete category with associated service types',
+        400,
       );
     }
 
     throw new AppError(
-      error.response?.data?.message || "Failed to delete service category",
-      error.response?.status || 500
+      error.response?.data?.message || 'Failed to delete service category',
+      error.response?.status || 500,
     );
   }
 };

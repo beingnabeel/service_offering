@@ -1,14 +1,14 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const serviceCategoryController = require("../controllers/serviceCategoryController");
+const serviceCategoryController = require('../controllers/serviceCategoryController');
 const {
   validateServiceCategory,
   validateServiceCategoryUpdate,
-} = require("../validators/serviceCategoryValidator");
-const { validate } = require("../middlewares/validationMiddlewares");
+} = require('../validators/serviceCategoryValidator');
+const { validate } = require('../middlewares/validationMiddlewares');
 const {
   uploadServiceCategoryIcon,
-} = require("../middlewares/uploadMiddleware");
+} = require('../middlewares/uploadMiddleware');
 
 /**
  * @route POST /api/v1/categories
@@ -22,7 +22,7 @@ const {
  */
 // Define the routes
 router
-  .route("/")
+  .route('/')
   .post(
     // First handle the file upload
     uploadServiceCategoryIcon[0], // multer middleware to handle file upload
@@ -30,11 +30,11 @@ router
     // Then validate the request body
     validate(validateServiceCategory),
     // Finally process the request
-    serviceCategoryController.createCategory
+    serviceCategoryController.createCategory,
   )
   .get(
     // Get all service categories with filtering, pagination, etc.
-    serviceCategoryController.getAllCategories
+    serviceCategoryController.getAllCategories,
   );
 
 /**
@@ -48,7 +48,7 @@ router
  * @access Private
  */
 router
-  .route("/:id")
+  .route('/:id')
   .get(serviceCategoryController.getCategoryById)
   .patch(
     // First handle the file upload
@@ -57,7 +57,7 @@ router
     // Then validate the request body
     validate(validateServiceCategoryUpdate),
     // Finally process the request
-    serviceCategoryController.updateCategory
+    serviceCategoryController.updateCategory,
   )
   .delete(serviceCategoryController.deleteCategory);
 

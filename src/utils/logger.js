@@ -1,49 +1,49 @@
-const winston = require("winston");
-const path = require("path");
-const { createHash } = require("crypto");
+const winston = require('winston');
+const path = require('path');
+const { createHash } = require('crypto');
 
 // Custom log format
 const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
-  winston.format.json()
+  winston.format.json(),
 );
 
 // Create daily rotate file options
 const dailyRotateOptions = {
-  datePattern: "YYYY-MM-DD",
+  datePattern: 'YYYY-MM-DD',
   zippedArchive: true,
-  maxSize: "20m",
-  maxFiles: "14d",
+  maxSize: '20m',
+  maxFiles: '14d',
 };
 
 // Create Winston logger instance
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: logFormat,
   transports: [
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.simple()
+        winston.format.simple(),
       ),
     }),
     // Error log file
     new winston.transports.File({
-      filename: path.join(__dirname, "../../logs/error.log"),
-      level: "error",
+      filename: path.join(__dirname, '../../logs/error.log'),
+      level: 'error',
       ...dailyRotateOptions,
     }),
     // Combined log file
     new winston.transports.File({
-      filename: path.join(__dirname, "../../logs/combined.log"),
+      filename: path.join(__dirname, '../../logs/combined.log'),
       ...dailyRotateOptions,
     }),
     // HTTP requests log file
     new winston.transports.File({
-      filename: path.join(__dirname, "../../logs/http.log"),
-      level: "http",
+      filename: path.join(__dirname, '../../logs/http.log'),
+      level: 'http',
       ...dailyRotateOptions,
     }),
   ],
@@ -53,9 +53,9 @@ const logger = winston.createLogger({
 const generateRequestId = (req) => {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 15);
-  return createHash("sha256")
+  return createHash('sha256')
     .update(`${timestamp}${random}${req.ip}`)
-    .digest("hex")
+    .digest('hex')
     .substring(0, 16);
 };
 
@@ -63,24 +63,24 @@ const generateRequestId = (req) => {
 const sanitizeData = (
   obj,
   sensitiveFields = [
-    "password",
-    "token",
-    "secret",
-    "authorization",
-    "credit_card",
-  ]
+    'password',
+    'token',
+    'secret',
+    'authorization',
+    'credit_card',
+  ],
 ) => {
   if (!obj) return obj;
   const sanitized = { ...obj };
 
   const sanitizeObject = (obj) => {
     for (let key in obj) {
-      if (typeof obj[key] === "object" && obj[key] !== null) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
         obj[key] = sanitizeObject(obj[key]);
       } else if (
         sensitiveFields.some((field) => key.toLowerCase().includes(field))
       ) {
-        obj[key] = "[REDACTED]";
+        obj[key] = '[REDACTED]';
       }
     }
     return obj;
@@ -93,14 +93,14 @@ const sanitizeData = (
 const performanceLogger = (req, res, next) => {
   const start = process.hrtime();
 
-  res.on("finish", () => {
+  res.on('finish', () => {
     const diff = process.hrtime(start);
     const duration = (diff[0] * 1e9 + diff[1]) / 1e6; // Convert to milliseconds
 
     const memoryUsage = process.memoryUsage();
 
     logger.http({
-      message: "Request completed",
+      message: 'Request completed',
       metadata: {
         method: req.method,
         url: req.originalUrl,
@@ -125,7 +125,7 @@ const requestLogger = (req, res, next) => {
   req.requestId = requestId;
 
   logger.info({
-    message: "Incoming request",
+    message: 'Incoming request',
     metadata: {
       body: sanitizeData(req.body),
       headers: sanitizeData(req.headers),
@@ -136,7 +136,7 @@ const requestLogger = (req, res, next) => {
       requestId,
       url: req.url,
       user: req.user,
-      userAgent: req.get("user-agent"),
+      userAgent: req.get('user-agent'),
     },
   });
 
@@ -146,13 +146,13 @@ const requestLogger = (req, res, next) => {
 // Error logging middleware
 const errorLogger = (err, req, res, next) => {
   const errorDetails = {
-    message: "Error occurred",
+    message: 'Error occurred',
     metadata: {
       error: {
         name: err.name,
         message: err.message,
         stack: err.stack,
-        code: err.code || "UNKNOWN_ERROR",
+        code: err.code || 'UNKNOWN_ERROR',
         status: err.status || 500,
         isOperational: err.isOperational || false,
       },
@@ -164,7 +164,7 @@ const errorLogger = (err, req, res, next) => {
         body: sanitizeData(req.body),
         headers: sanitizeData(req.headers),
         ip: req.ip,
-        userAgent: req.get("user-agent"),
+        userAgent: req.get('user-agent'),
         requestId: req.requestId,
       },
       user: req.user ? { id: req.user.id } : null,
