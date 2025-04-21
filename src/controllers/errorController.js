@@ -17,6 +17,120 @@ const {
 const { logger } = require('../utils/logger');
 
 /**
+ * -----------------------------------------------
+ * ERROR FACTORY FUNCTIONS
+ * -----------------------------------------------
+ * These functions create standardized error objects for common scenarios.
+ * Use these throughout the application instead of creating AppError instances directly.
+ */
+
+/**
+ * Create an invalid ID format error (400 Bad Request)
+ * @param {string} id - The invalid ID that was provided
+ * @param {string} resourceType - The type of resource (e.g., 'service type', 'category')
+ * @returns {AppError} AppError instance with proper details
+ */
+const createInvalidIdError = (id, resourceType = 'resource') => {
+  const error = new AppError(`Invalid ${resourceType} ID format`, 400);
+  error.code = 'INVALID_ID_FORMAT';
+  error.details = {
+    id: 'ID must be a valid UUID',
+    providedValue: id,
+  };
+  return error;
+};
+
+/**
+ * Create a resource not found error (404 Not Found)
+ * @param {string} id - The ID that was not found
+ * @param {string} resourceType - The type of resource not found (e.g., 'service type', 'category')
+ * @returns {AppError} AppError instance with proper details
+ */
+const createNotFoundError = (id, resourceType = 'resource') => {
+  const error = new AppError(`${resourceType} not found`, 404);
+  error.code = 'RESOURCE_NOT_FOUND';
+  error.details = {
+    id: `No ${resourceType} exists with ID: ${id}`,
+  };
+  return error;
+};
+
+/**
+ * Create an unauthorized access error (401 Unauthorized)
+ * @param {string} message - Optional custom message
+ * @returns {AppError} AppError instance with proper details
+ */
+const createUnauthorizedError = (message = 'Unauthorized access') => {
+  const error = new AppError(message, 401);
+  error.code = 'UNAUTHORIZED';
+  return error;
+};
+
+/**
+ * Create a forbidden access error (403 Forbidden)
+ * @param {string} message - Optional custom message
+ * @returns {AppError} AppError instance with proper details
+ */
+const createForbiddenError = (message = 'Forbidden access') => {
+  const error = new AppError(message, 403);
+  error.code = 'FORBIDDEN';
+  return error;
+};
+
+/**
+ * Create a validation error for invalid input data (422 Unprocessable Entity)
+ * @param {Object} validationErrors - Object containing field-specific validation errors
+ * @returns {AppError} AppError instance with proper details
+ */
+const createValidationError = (validationErrors) => {
+  const error = new AppError('Validation failed', 422);
+  error.code = 'VALIDATION_ERROR';
+  error.details = validationErrors;
+  return error;
+};
+
+/**
+ * Create a duplicate resource error (409 Conflict)
+ * @param {string} field - The field that caused the conflict
+ * @param {string} value - The value that already exists
+ * @param {string} resourceType - The type of resource (e.g., 'service type', 'category')
+ * @returns {AppError} AppError instance with proper details
+ */
+const createDuplicateError = (field, value, resourceType = 'resource') => {
+  const error = new AppError(
+    `${resourceType} already exists with this ${field}`,
+    409,
+  );
+  error.code = 'DUPLICATE_RESOURCE';
+  error.details = {
+    [field]: `A ${resourceType} with ${field} '${value}' already exists`,
+  };
+  return error;
+};
+
+/**
+ * Create a rate limit exceeded error (429 Too Many Requests)
+ * @param {string} message - Optional custom message
+ * @returns {AppError} AppError instance with proper details
+ */
+const createRateLimitError = (message = 'Rate limit exceeded') => {
+  const error = new AppError(message, 429);
+  error.code = 'RATE_LIMIT_EXCEEDED';
+  return error;
+};
+
+/**
+ * Create a generic internal server error (500 Internal Server Error)
+ * @param {string} message - Optional custom message
+ * @returns {AppError} AppError instance with proper details
+ */
+const createInternalError = (message = 'Internal server error') => {
+  const error = new AppError(message, 500);
+  error.code = 'INTERNAL_ERROR';
+  return error;
+};
+
+/**
  * Handle errors from the Prisma ORM
  * @param {Error} err - The Prisma error
  * @param {Object} req - Express request object
@@ -227,7 +341,8 @@ const handleUnknownError = (err, req, res) => {
 /**
  * Global error handling middleware for Express
  */
-module.exports = (err, req, res) => {
+// Export the error handler as the default export
+const globalErrorHandler = (err, req, res, next) => {
   // Make sure the response status is set
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
@@ -260,4 +375,20 @@ module.exports = (err, req, res) => {
     // Unknown errors
     handleUnknownError(err, req, res);
   }
+};
+
+// Export the error handler and factory functions
+module.exports = {
+  // Main error handler middleware
+  handler: globalErrorHandler,
+
+  // Error factory functions
+  createInvalidIdError,
+  createNotFoundError,
+  createUnauthorizedError,
+  createForbiddenError,
+  createValidationError,
+  createDuplicateError,
+  createRateLimitError,
+  createInternalError,
 };

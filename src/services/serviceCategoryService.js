@@ -3,6 +3,11 @@ const AppError = require('../utils/appError');
 // const APIFeatures = require('../utils/apiFeatures');
 const { logger } = require('../utils/logger');
 const axios = require('axios');
+const {
+  createNotFoundError,
+  createInternalError,
+  createDuplicateError,
+} = require('../controllers/errorController');
 
 // Injection service base URL
 const INJECTION_SERVICE_URL =
@@ -45,15 +50,11 @@ const createServiceCategory = async (categoryData) => {
 
     // Check for specific error responses from the injection service
     if (error.response?.status === 409) {
-      throw new AppError(
-        'A service category with this name and vehicle type already exists',
-        409,
-      );
+      throw createDuplicateError('name', categoryData.name, 'service category');
     }
 
-    throw new AppError(
+    throw createInternalError(
       error.response?.data?.message || 'Failed to create service category',
-      error.response?.status || 500,
     );
   }
 };
@@ -310,7 +311,7 @@ const getServiceCategoryById = async (id) => {
         message: 'Service category not found',
         metadata: { categoryId: id },
       });
-      throw new AppError('Service category not found', 404);
+      throw createNotFoundError(id, 'service category');
     }
     logger.info({
       message: 'Service category fetched successfully',
@@ -319,11 +320,16 @@ const getServiceCategoryById = async (id) => {
 
     return serviceCategory;
   } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
     logger.error({
       message: 'Error fetching service category by id',
       metadata: { categoryId: id, error: error.message, stack: error.stack },
     });
-    throw error;
+    throw createInternalError(
+      `Failed to retrieve service category by ID: ${id}`,
+    );
   }
 };
 /**
@@ -364,17 +370,14 @@ const updateServiceCategory = async (id, updateData) => {
 
     // Check for specific error responses from the injection service
     if (error.response?.status === 404) {
-      throw new AppError('Service category not found', 404);
+      throw createNotFoundError(id, 'service category');
     } else if (error.response?.status === 409) {
-      throw new AppError(
-        'A service category with this name and vehicle type already exists',
-        409,
-      );
+      throw createDuplicateError('name', updateData.name, 'service category');
     }
 
-    throw new AppError(
-      error.response?.data?.message || 'Failed to update service category',
-      error.response?.status || 500,
+    throw createInternalError(
+      error.response?.data?.message ||
+        `Failed to update service category with ID: ${id}`,
     );
   }
 };
@@ -413,17 +416,24 @@ const deleteServiceCategory = async (id) => {
 
     // Check for specific error responses from the injection service
     if (error.response?.status === 404) {
-      throw new AppError('Service category not found', 404);
+      throw createNotFoundError(id, 'service category');
     } else if (error.response?.status === 400) {
-      throw new AppError(
+      const validationError = new AppError(
         'Cannot delete category with associated service types',
         400,
       );
+      validationError.code = 'DEPENDENT_RESOURCES_EXIST';
+      validationError.details = {
+        message:
+          'This category has service types that must be deleted or reassigned first',
+        categoryId: id,
+      };
+      throw validationError;
     }
 
-    throw new AppError(
-      error.response?.data?.message || 'Failed to delete service category',
-      error.response?.status || 500,
+    throw createInternalError(
+      error.response?.data?.message ||
+        `Failed to delete service category with ID: ${id}`,
     );
   }
 };

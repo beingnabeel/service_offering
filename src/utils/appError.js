@@ -142,6 +142,7 @@ class AppError extends Error {
           { fields: meta.target },
         );
         break;
+      // In the switch case for 'P2002' in the fromPrismaError method:
 
       case 'P2003': // Foreign key constraint violation
         appError = AppError.badRequest(

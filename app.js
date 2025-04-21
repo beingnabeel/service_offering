@@ -4,7 +4,9 @@ const cors = require('cors');
 const express = require('express');
 // const winston = require('winston');
 const AppError = require('./src/utils/appError');
-const globalErrorHandler = require('./src/controllers/errorController');
+const {
+  handler: globalErrorHandler,
+} = require('./src/controllers/errorController');
 // const { requestLogger, errorLogger } = require('./src/utils/logger');
 const {
   logRequest,

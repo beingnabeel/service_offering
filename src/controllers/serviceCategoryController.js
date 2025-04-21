@@ -1,8 +1,12 @@
 const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
+// const AppError = require('../utils/appError');
 const serviceCategoryService = require('../services/serviceCategoryService');
 const { formatSuccess } = require('../utils/responseFormatter');
 const { logger } = require('../utils/logger');
+const {
+  createInvalidIdError,
+  createNotFoundError,
+} = require('./errorController');
 
 /**
  * Create a new service category
@@ -135,16 +139,17 @@ const updateCategory = catchAsync(async (req, res) => {
 
 const getCategoryById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-
-  if (!id) {
-    return next(new AppError('Category ID is required', 400));
+  const uuidRegex =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  if (!id || !uuidRegex.test(id)) {
+    return next(createInvalidIdError(id, 'service category'));
   }
   // Get the service category by ID using the service layer
   const serviceCategory =
     await serviceCategoryService.getServiceCategoryById(id);
 
   if (!serviceCategory) {
-    return next(new AppError('Service category not found', 404));
+    return next(createNotFoundError(id, 'service category'));
   }
 
   // Return success response
@@ -163,9 +168,10 @@ const getCategoryById = catchAsync(async (req, res, next) => {
  */
 const deleteCategory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-
-  if (!id) {
-    return next(new AppError('Category ID is required', 400));
+  const uuidRegex =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  if (!id || !uuidRegex.test(id)) {
+    return next(createInvalidIdError(id, 'service category'));
   }
 
   // Delete the service category using the service layer
@@ -173,7 +179,7 @@ const deleteCategory = catchAsync(async (req, res, next) => {
     await serviceCategoryService.deleteServiceCategory(id);
 
   if (!deletedCategory) {
-    return next(new AppError('Service category not found', 404));
+    return next(createNotFoundError(id, 'service category'));
   }
 
   // Return success response
