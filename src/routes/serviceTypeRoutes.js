@@ -2,6 +2,8 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const serviceTypeController = require('../controllers/serviceTypeController');
+// Import authentication middleware
+const { authenticate, restrictTo } = require('../middlewares/authMiddleware');
 const {
   validateServiceType,
   validateUpdateServiceType,
@@ -10,6 +12,9 @@ const { validate } = require('../middlewares/validationMiddlewares');
 const { uploadServiceTypeImage } = require('../middlewares/uploadMiddleware');
 
 router.route('/').post(
+  // Authenticate and authorize - ADMIN only
+  authenticate,
+  restrictTo('ADMIN'),
   // First handle the file upload
   uploadServiceTypeImage[0], // multer middleware to handle file upload
   uploadServiceTypeImage[1], // middleware to process and upload file to S3
@@ -31,26 +36,51 @@ const getTypeByIdLimiter = rateLimit({
 
 router
   .route('/:id')
-  .get(getTypeByIdLimiter, serviceTypeController.getTypeById)
+  .get(
+    // Authenticate - Both ADMIN and USER can access
+    authenticate,
+    getTypeByIdLimiter,
+    serviceTypeController.getTypeById,
+  )
   .patch(
+    // Authenticate and authorize - ADMIN only
+    authenticate,
+    restrictTo('ADMIN'),
     uploadServiceTypeImage[0],
     uploadServiceTypeImage[1],
     validate(validateUpdateServiceType),
     getTypeByIdLimiter,
     serviceTypeController.updateType,
   )
-  .delete(getTypeByIdLimiter, serviceTypeController.deleteType); // Apply limiter before the controller
+  .delete(
+    // Authenticate and authorize - ADMIN only
+    authenticate,
+    restrictTo('ADMIN'),
+    getTypeByIdLimiter,
+    serviceTypeController.deleteType,
+  ); // Apply limiter before the controller
 
 // Route to get all service types for a specific category
-router
-  .route('/category/:categoryId')
-  .get(getTypeByIdLimiter, serviceTypeController.getTypesByCategoryId);
+router.route('/category/:categoryId').get(
+  // Authenticate - Both ADMIN and USER can access
+  authenticate,
+  getTypeByIdLimiter,
+  serviceTypeController.getTypesByCategoryId,
+);
 
 // Routes for managing service type components
 router
   .route('/:id/components')
-  .get(getTypeByIdLimiter, serviceTypeController.getTypeComponents)
+  .get(
+    // Authenticate - Both ADMIN and USER can access
+    authenticate,
+    getTypeByIdLimiter,
+    serviceTypeController.getTypeComponents,
+  )
   .post(
+    // Authenticate and authorize - ADMIN only
+    authenticate,
+    restrictTo('ADMIN'),
     getTypeByIdLimiter,
     validate(
       require('../validators/serviceTypeComponentValidator')
@@ -62,6 +92,9 @@ router
 // Route for managing a specific service type component
 router.delete(
   '/:id/components/:componentId',
+  // Authenticate and authorize - ADMIN only
+  authenticate,
+  restrictTo('ADMIN'),
   getTypeByIdLimiter,
   serviceTypeController.removeTypeComponent,
 );

@@ -2,6 +2,8 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const serviceComponentController = require('../controllers/serviceComponentController');
+// Import authentication middleware
+const { authenticate, restrictTo } = require('../middlewares/authMiddleware');
 const { validate } = require('../middlewares/validationMiddlewares');
 const {
   validateServiceComponent,
@@ -18,20 +20,41 @@ const getComponentTypesLimiter = rateLimit({
 
 router
   .route('/')
-  .get(getComponentTypesLimiter, serviceComponentController.getAllComponents)
+  .get(
+    // Authenticate - Both ADMIN and USER can access
+    authenticate,
+    getComponentTypesLimiter,
+    serviceComponentController.getAllComponents,
+  )
   .post(
+    // Authenticate and authorize - ADMIN only
+    authenticate,
+    restrictTo('ADMIN'),
     validate(validateServiceComponent),
     serviceComponentController.createComponent,
   );
 
 router
   .route('/:id')
-  .get(getComponentTypesLimiter, serviceComponentController.getComponentById)
+  .get(
+    // Authenticate - Both ADMIN and USER can access
+    authenticate,
+    getComponentTypesLimiter,
+    serviceComponentController.getComponentById,
+  )
   .patch(
+    // Authenticate and authorize - ADMIN only
+    authenticate,
+    restrictTo('ADMIN'),
     validate(validateUpdateServiceComponent),
     serviceComponentController.updateComponent,
   )
-  .delete(serviceComponentController.deleteComponent);
+  .delete(
+    // Authenticate and authorize - ADMIN only
+    authenticate,
+    restrictTo('ADMIN'),
+    serviceComponentController.deleteComponent,
+  );
 // Route to get all service components for a specific category
 // router
 //   .route('/:id/components')
