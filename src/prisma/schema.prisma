@@ -54,6 +54,205 @@ enum PaymentPolicy {
   FREE_DIAGNOSTIC
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum RequestType {
+  REGISTRATION
+  LOGIN
+  MOBILE_CHANGE
+}
+
+// Booking Service Models
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL_PAID
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum FeedbackType {
+  SERVICE_QUALITY
+  STAFF_BEHAVIOR
+  PRICING
+  TIMELINESS
+  OVERALL_EXPERIENCE
+  OTHER
+}
+
+model Vehicle {
+  id              String      @id @default(dbgenerated("gen_random_uuid()"))
+  userId          String // Foreign key to User microservice
+  registrationNo  String      @unique
+  brandId         String // Foreign key to Brand model in Service Provider microservice
+  modelId         String // Foreign key to Model model in Service Provider microservice
+  vehicleType     VehicleType
+  manufactureYear Int
+  color           String?
+  fuelType        String?
+  transmission    String?
+  mileage         Int?
+  lastServiceDate DateTime?
+  insuranceId     String? // Foreign key to Insurance microservice
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  bookings        Booking[]
+
+  // Add indexes for better query performance on foreign keys
+  @@index([userId])
+  @@index([brandId])
+  @@index([modelId])
+}
+
+model Booking {
+  id                  String           @id @default(dbgenerated("gen_random_uuid()"))
+  bookingNumber       String           @unique
+  userId              String // Foreign key to User microservice
+  vehicleId           String
+  vehicle             Vehicle          @relation(fields: [vehicleId], references: [id])
+  serviceCenterId     String // Foreign key to ServiceCenter in Service Provider microservice
+  slotId              String? // Foreign key to Slot in Service Provider microservice
+  scheduledDateTime   DateTime
+  estimatedEndTime    DateTime?
+  actualEndTime       DateTime?
+  status              BookingStatus    @default(PENDING)
+  totalAmount         Decimal          @db.Decimal(10, 2)
+  discountAmount      Decimal?         @db.Decimal(10, 2)
+  taxAmount           Decimal?         @db.Decimal(10, 2)
+  finalAmount         Decimal          @db.Decimal(10, 2)
+  paymentStatus       PaymentStatus    @default(PENDING)
+  pickupDropRequired  Boolean          @default(false)
+  pickupAddress       String?
+  dropAddress         String?
+  pickupFee           Decimal?         @db.Decimal(10, 2)
+  specialInstructions String?
+  cancelledReason     String?
+  cancelledBy         String?
+  refundAmount        Decimal?         @db.Decimal(10, 2)
+  refundReason        String?
+  refundedAt          DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  bookingServices     BookingService[]
+  bookingHistory      BookingHistory[]
+
+  // Add indexes for better query performance on foreign keys
+  @@index([userId])
+  @@index([serviceCenterId])
+  @@index([slotId])
+}
+
+model BookingService {
+  id                String        @id @default(dbgenerated("gen_random_uuid()"))
+  bookingId         String
+  booking           Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  serviceOfferingId String // Foreign key to ServiceCenterOffering in Service Offering microservice
+  packageOfferingId String? // Foreign key to ServicePackageOffering in Service Offering microservice
+  quantity          Int           @default(1)
+  unitPrice         Decimal       @db.Decimal(10, 2)
+  discountAmount    Decimal?      @db.Decimal(10, 2)
+  finalPrice        Decimal       @db.Decimal(10, 2)
+  status            BookingStatus @default(PENDING)
+  serviceStartTime  DateTime?
+  serviceEndTime    DateTime?
+  staffAssigned     String? // Foreign key to Staff in Service Provider microservice
+  comments          String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([bookingId])
+  @@index([serviceOfferingId])
+  @@index([packageOfferingId])
+  @@index([staffAssigned])
+}
+
+model BookingHistory {
+  id             String         @id @default(dbgenerated("gen_random_uuid()"))
+  bookingId      String
+  booking        Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  status         BookingStatus
+  previousStatus BookingStatus?
+  actionBy       String // Foreign key to User microservice (can be customer or staff)
+  actionRole     String // CUSTOMER, STAFF, SYSTEM
+  comments       String?
+  createdAt      DateTime       @default(now())
+
+  @@index([bookingId])
+  @@index([actionBy]) // Added index for the foreign key to improve performance
+}
+
+model User {
+  id           String       @id @default(uuid())
+  firstName    String
+  middleName   String?
+  lastName     String
+  email        String       @unique
+  mobileNumber String       @unique
+  isVerified   Boolean      @default(false)
+  status       UserStatus   @default(ACTIVE)
+  role         UserRole     @default(USER)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  lastLogin    DateTime?
+  // Relations
+  sessions     Session[]
+  otpRequests  OtpRequest[]
+
+  @@index([email])
+  @@index([mobileNumber])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OtpRequest {
+  id              String      @id @default(uuid())
+  userId          String
+  requestType     RequestType
+  otp             String // Hashed OTP, not stored in plain text
+  verified        Boolean     @default(false)
+  expiresAt       DateTime
+  createdAt       DateTime    @default(now())
+  // For mobile number change
+  newMobileNumber String?
+  // Relations
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model Brand {
   id             String          @id @default(dbgenerated("gen_random_uuid()"))
   name           String          @unique

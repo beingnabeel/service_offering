@@ -1,16 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
-// Import route modules
 const serviceCategoryRoutes = require('./serviceCategoryRoutes');
 const serviceTypeRoutes = require('./serviceTypeRoutes');
+const serviceComponentRoutes = require('./serviceComponentRoutes');
+const serviceCenterOfferingRoutes = require('./serviceCenterOfferingRoutes');
 
-// API Routes v1
-
-// Mount service category routes
 router.use('/api/v1/categories', serviceCategoryRoutes);
 router.use('/api/v1/types', serviceTypeRoutes);
-
-// Additional API routes can be mounted here
+router.use('/api/v1/components', serviceComponentRoutes);
+router.use('/api/v1/service-centers', serviceCenterOfferingRoutes);
 
 module.exports = router;

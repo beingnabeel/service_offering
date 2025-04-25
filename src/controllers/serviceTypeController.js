@@ -159,10 +159,155 @@ const deleteType = catchAsync(async (req, res, next) => {
   return res.status(204).send();
 });
 
+// Associate a component with a service type
+const associateComponentWithType = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Basic UUID validation
+  const uuidRegex =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  if (!id || !uuidRegex.test(id)) {
+    return next(createInvalidIdError(id, 'service type'));
+  }
+
+  // Basic validation for required service component ID
+  if (!req.body.serviceComponentId) {
+    return next(createInternalError('Service component ID is required'));
+  }
+
+  try {
+    const typeComponent = await serviceTypeService.associateComponentWithType(
+      id,
+      req.body,
+    );
+
+    return res
+      .status(201)
+      .json(
+        formatSuccess(
+          typeComponent,
+          'Component associated with service type successfully',
+          201,
+        ),
+      );
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get all components associated with a service type
+// const getTypeComponents = catchAsync(async (req, res, next) => {
+//   const { id } = req.params;
+
+//   // Basic UUID validation
+//   const uuidRegex =
+//     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+//   if (!id || !uuidRegex.test(id)) {
+//     return next(createInvalidIdError(id, 'service type'));
+//   }
+
+//   try {
+//     // Get all components associated with the service type
+//     const components = await serviceTypeService.getComponentsByTypeId(id);
+
+//     // If no components are found, return empty array with success message
+//     if (!components || components.length === 0) {
+//       return res
+//         .status(200)
+//         .json(
+//           formatSuccess([], 'No components found for this service type', 200),
+//         );
+//     }
+
+//     // Return the response in the requested format - formatSuccess already handles this correctly
+//     return res
+//       .status(200)
+//       .json(
+//         formatSuccess(components, 'Components retrieved successfully', 200),
+//       );
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// the above one is working fine ( changed it to use the apifeatures)
+const getTypeComponents = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Basic UUID validation
+  const uuidRegex =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  if (!id || !uuidRegex.test(id)) {
+    return next(createInvalidIdError(id, 'service type'));
+  }
+
+  try {
+    // Pass the query parameters to the service layer for filtering, sorting, and pagination
+    const result = await serviceTypeService.getComponentsByTypeId(
+      id,
+      req.query,
+    );
+
+    // If no components are found, return empty array with pagination metadata
+    if (!result.data || result.data.length === 0) {
+      return res.status(200).json(
+        formatSuccess(
+          {
+            data: [],
+            meta: result.meta || {
+              total: 0,
+              page: 1,
+              limit: 10,
+              totalPages: 0,
+            },
+          },
+          'No components found for this service type',
+          200,
+        ),
+      );
+    }
+
+    // Return the response with data and metadata
+    return res
+      .status(200)
+      .json(formatSuccess(result, 'Components retrieved successfully', 200));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Remove a component from a service type
+const removeTypeComponent = catchAsync(async (req, res, next) => {
+  const { id, componentId } = req.params;
+
+  // Basic UUID validation for service type ID
+  const uuidRegex =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  if (!id || !uuidRegex.test(id)) {
+    return next(createInvalidIdError(id, 'service type'));
+  }
+
+  // Basic UUID validation for component ID
+  if (!componentId || !uuidRegex.test(componentId)) {
+    return next(createInvalidIdError(componentId, 'service component'));
+  }
+
+  try {
+    await serviceTypeService.removeComponentFromType(id, componentId);
+
+    // Return 204 No Content for successful deletion
+    return res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = {
   createType,
   getTypeById,
   updateType,
   getTypesByCategoryId,
   deleteType,
+  associateComponentWithType,
+  getTypeComponents,
+  removeTypeComponent,
 };

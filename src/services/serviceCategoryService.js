@@ -50,7 +50,33 @@ const createServiceCategory = async (categoryData) => {
 
     // Check for specific error responses from the injection service
     if (error.response?.status === 409) {
-      throw createDuplicateError('name', categoryData.name, 'service category');
+      // If the error has a code of DUPLICATE_RESOURCE, use the details from the response
+      if (error.response?.data?.code === 'DUPLICATE_RESOURCE') {
+        const details = error.response.data.details || {};
+        const fields = details.fields || ['name', 'vehicleType'];
+        // If it's the name+vehicleType unique constraint
+        if (fields.includes('name') && fields.includes('vehicleType')) {
+          throw createDuplicateError(
+            'name and vehicleType',
+            `${categoryData.name}, ${categoryData.vehicleType}`,
+            'service category',
+          );
+        } else {
+          // For other duplicate fields
+          throw createDuplicateError(
+            fields.join(' and '),
+            fields.map((field) => categoryData[field]).join(', '),
+            'service category',
+          );
+        }
+      } else {
+        // Fallback to simple duplicate handling
+        throw createDuplicateError(
+          'name',
+          categoryData.name,
+          'service category',
+        );
+      }
     }
 
     throw createInternalError(
@@ -372,7 +398,29 @@ const updateServiceCategory = async (id, updateData) => {
     if (error.response?.status === 404) {
       throw createNotFoundError(id, 'service category');
     } else if (error.response?.status === 409) {
-      throw createDuplicateError('name', updateData.name, 'service category');
+      // If the error has a code of DUPLICATE_RESOURCE, use the details from the response
+      if (error.response?.data?.code === 'DUPLICATE_RESOURCE') {
+        const details = error.response.data.details || {};
+        const fields = details.fields || ['name', 'vehicleType'];
+        // If it's the name+vehicleType unique constraint
+        if (fields.includes('name') && fields.includes('vehicleType')) {
+          throw createDuplicateError(
+            'name and vehicleType',
+            `${updateData.name}, ${updateData.vehicleType}`,
+            'service category',
+          );
+        } else {
+          // For other duplicate fields
+          throw createDuplicateError(
+            fields.join(' and '),
+            fields.map((field) => updateData[field]).join(', '),
+            'service category',
+          );
+        }
+      } else {
+        // Fallback to simple duplicate handling
+        throw createDuplicateError('name', updateData.name, 'service category');
+      }
     }
 
     throw createInternalError(

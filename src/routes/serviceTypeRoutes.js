@@ -38,12 +38,34 @@ router
     validate(validateUpdateServiceType),
     getTypeByIdLimiter,
     serviceTypeController.updateType,
-  ); // Apply limiter before the controller
+  )
+  .delete(getTypeByIdLimiter, serviceTypeController.deleteType); // Apply limiter before the controller
 
 // Route to get all service types for a specific category
 router
   .route('/category/:categoryId')
-  .get(getTypeByIdLimiter, serviceTypeController.getTypesByCategoryId)
-  .delete(getTypeByIdLimiter, serviceTypeController.deleteType);
+  .get(getTypeByIdLimiter, serviceTypeController.getTypesByCategoryId);
+
+// Routes for managing service type components
+router
+  .route('/:id/components')
+  .get(getTypeByIdLimiter, serviceTypeController.getTypeComponents)
+  .post(
+    getTypeByIdLimiter,
+    validate(
+      require('../validators/serviceTypeComponentValidator')
+        .validateTypeComponent,
+    ),
+    serviceTypeController.associateComponentWithType,
+  );
+
+// Route for managing a specific service type component
+router.delete(
+  '/:id/components/:componentId',
+  getTypeByIdLimiter,
+  serviceTypeController.removeTypeComponent,
+);
 
 module.exports = router;
+
+//4166445106595233
