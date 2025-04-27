@@ -7,7 +7,11 @@ const validateServiceComponent = [
     .withMessage('Name is required')
     .isLength({ min: 2, max: 255 })
     .withMessage('Name must be between 2 and 255 characters'),
-
+  body('cost')
+    .notEmpty()
+    .withMessage('Cost is required')
+    .isFloat({ min: 0 })
+    .withMessage('Cost must be a non-negative decimal'),
   body('description')
     .optional()
     .trim()
@@ -27,7 +31,10 @@ const validateUpdateServiceComponent = [
     .optional()
     .isLength({ min: 2, max: 255 })
     .withMessage('Name must be between 2 and 255 characters'),
-
+  body('cost')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Cost must be a non-negative decimal'),
   body('description')
     .optional()
     .trim()

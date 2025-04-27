@@ -14,6 +14,7 @@ const createComponent = catchAsync(async (req, res, next) => {
     description: req.body.description,
     estimatedDuration: req.body.estimatedDuration,
     vehicleType: req.body.vehicleType,
+    cost: req.body.cost,
   };
   const serviceComponent =
     await serviceComponentService.createServiceComponent(componentData);
@@ -86,6 +87,7 @@ const updateComponent = catchAsync(async (req, res) => {
     name: req.body.name,
     description: req.body.description,
     estimatedDuration: req.body.estimatedDuration,
+    cost: req.body.cost,
     vehicleType: req.body.vehicleType,
   };
   const updatedComponent = await serviceComponentService.updateServiceComponent(

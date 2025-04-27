@@ -5,6 +5,7 @@ const { promisify } = require('util');
  * Authentication middleware to protect routes
  * Verifies JWT token and attaches user data to request
  */
+
 exports.authenticate = async (req, res, next) => {
   // 1) Get token from header
   let token;
