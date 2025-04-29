@@ -16,8 +16,7 @@ const validateServiceCenterOffering = [
 
   // Price validation
   body('basePrice')
-    .notEmpty()
-    .withMessage('Base price is required')
+    .optional()
     .isFloat({ min: 0 })
     .withMessage('Base price must be a non-negative number'),
 
@@ -27,10 +26,10 @@ const validateServiceCenterOffering = [
     .isFloat({ min: 0, max: 100 })
     .withMessage('Discount percentage must be between 0 and 100'),
 
-  body('discountAbsolute')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Absolute discount must be a non-negative number'),
+  // body('discountAbsolute')
+  //   .optional()
+  //   .isFloat({ min: 0 })
+  //   .withMessage('Absolute discount must be a non-negative number'),
 
   body('discountValidUntil')
     .optional()
@@ -114,15 +113,15 @@ const validateServiceCenterOffering = [
     .isBoolean()
     .withMessage('isHighlighted must be a boolean'),
 
-  body('hasPickupDropService')
-    .optional()
-    .isBoolean()
-    .withMessage('hasPickupDropService must be a boolean'),
+  // body('hasPickupDropService')
+  //   .optional()
+  //   .isBoolean()
+  //   .withMessage('hasPickupDropService must be a boolean'),
 
-  body('pickupDropFee')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Pickup/drop fee must be a non-negative number'),
+  // body('pickupDropFee')
+  //   .optional()
+  //   .isFloat({ min: 0 })
+  //   .withMessage('Pickup/drop fee must be a non-negative number'),
 
   body('hasEmergencyService')
     .optional()
@@ -159,10 +158,10 @@ const validateUpdateServiceCenterOffering = [
     .isFloat({ min: 0, max: 100 })
     .withMessage('Discount percentage must be between 0 and 100'),
 
-  body('discountAbsolute')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Absolute discount must be a non-negative number'),
+  // body('discountAbsolute')
+  //   .optional()
+  //   .isFloat({ min: 0 })
+  //   .withMessage('Absolute discount must be a non-negative number'),
 
   body('discountValidUntil')
     .optional()
@@ -246,15 +245,15 @@ const validateUpdateServiceCenterOffering = [
     .isBoolean()
     .withMessage('isHighlighted must be a boolean'),
 
-  body('hasPickupDropService')
-    .optional()
-    .isBoolean()
-    .withMessage('hasPickupDropService must be a boolean'),
+  // body('hasPickupDropService')
+  //   .optional()
+  //   .isBoolean()
+  //   .withMessage('hasPickupDropService must be a boolean'),
 
-  body('pickupDropFee')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Pickup/drop fee must be a non-negative number'),
+  // body('pickupDropFee')
+  //   .optional()
+  //   .isFloat({ min: 0 })
+  //   .withMessage('Pickup/drop fee must be a non-negative number'),
 
   body('hasEmergencyService')
     .optional()

@@ -266,10 +266,22 @@ const getTypeComponents = catchAsync(async (req, res, next) => {
       );
     }
 
-    // Return the response with data and metadata
-    return res
-      .status(200)
-      .json(formatSuccess(result, 'Components retrieved successfully', 200));
+    // Transform data to match desired response format
+    // Extract only the serviceComponent objects from each item
+    const transformedComponents = result.data.map(
+      (item) => item.serviceComponent,
+    );
+
+    return res.status(200).json(
+      formatSuccess(
+        {
+          ServiceTypeComponents: transformedComponents, // Renamed field with transformed data
+          meta: result.meta,
+        },
+        'Components retrieved successfully',
+        200,
+      ),
+    );
   } catch (error) {
     next(error);
   }

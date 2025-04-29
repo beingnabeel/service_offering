@@ -17,7 +17,11 @@ const INJECTION_SERVICE_URL =
  * @param {Object} offeringData - The data for the new service center offering
  * @returns {Promise<Object>} - The created service center offering
  */
-const createServiceCenterOffering = async (serviceCenterId, offeringData) => {
+const createServiceCenterOffering = async (
+  serviceCenterId,
+  offeringData,
+  req,
+) => {
   try {
     // Note: We're not validating the service type locally anymore
     // That validation will be performed by the injection service
@@ -39,7 +43,7 @@ const createServiceCenterOffering = async (serviceCenterId, offeringData) => {
         data: offeringDataToSend,
       },
     });
-
+    const authToken = req.headers.authorization;
     const response = await axios.post(
       `${INJECTION_SERVICE_URL}/api/v1/service-centers/${serviceCenterId}/offerings`,
       offeringDataToSend,
@@ -48,6 +52,7 @@ const createServiceCenterOffering = async (serviceCenterId, offeringData) => {
         timeout: 5000,
         headers: {
           'Content-Type': 'application/json',
+          Authorization: authToken,
         },
       },
     );
@@ -191,8 +196,8 @@ const getServiceCenterOfferings = async (
       include: {
         // Include related data
         serviceType: true,
-        additionalFeatures: true,
-        serviceTaxes: true,
+        // additionalFeatures: true,
+        // serviceTaxes: true,
       },
     });
 
@@ -240,14 +245,14 @@ const getServiceCenterOffering = async (
       include: {
         // Include related data
         serviceType: true,
-        additionalFeatures: true,
-        serviceTaxes: true,
-        vehicleBrandServiceOfferings: {
-          include: {
-            brand: true,
-            model: true,
-          },
-        },
+        // additionalFeatures: true,
+        // serviceTaxes: true,
+        // vehicleBrandServiceOfferings: {
+        //   include: {
+        //     brand: true,
+        //     model: true,
+        //   },
+        // },
       },
     });
 

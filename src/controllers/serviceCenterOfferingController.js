@@ -32,6 +32,7 @@ const createServiceCenterOffering = catchAsync(async (req, res, next) => {
       await serviceCenterOfferingService.createServiceCenterOffering(
         serviceCenterId,
         offeringData,
+        req,
       );
 
     // Return the created offering with status 201
