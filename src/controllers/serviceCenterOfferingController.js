@@ -134,6 +134,7 @@ const updateServiceCenterOffering = catchAsync(async (req, res, next) => {
         serviceCenterId,
         serviceCenterOfferingId,
         req.body,
+        req,
       );
 
     if (!updatedOffering) {

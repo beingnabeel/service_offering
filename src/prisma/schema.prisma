@@ -110,7 +110,7 @@ enum RequestType {
 model Vehicle {
   id              String      @id @default(dbgenerated("gen_random_uuid()"))
   userId          String // Foreign key to User microservice
-  registrationNo  String      @unique
+  registrationNo  String
   brandId         String // Foreign key to Brand model in Service Provider microservice
   modelId         String // Foreign key to Model model in Service Provider microservice
   vehicleType     VehicleType

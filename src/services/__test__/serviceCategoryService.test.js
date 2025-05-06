@@ -2,7 +2,6 @@
 const serviceCategoryService = require('../serviceCategoryService');
 const axios = require('axios');
 const prisma = require('../../models/index');
-const AppError = require('../../utils/appError');
 const { logger } = require('../../utils/logger');
 
 // Mock dependencies
@@ -88,7 +87,7 @@ describe('serviceCategoryService', () => {
       await expect(
         serviceCategoryService.createServiceCategory(categoryData),
       ).rejects.toThrow(
-        'A service category with this name and vehicle type already exists',
+        'service category already exists with this name',
       );
 
       expect(logger.error).toHaveBeenCalled();
@@ -139,7 +138,7 @@ describe('serviceCategoryService', () => {
 
       await expect(
         serviceCategoryService.getServiceCategoryById('test-id'),
-      ).rejects.toThrow('Service category not found');
+      ).rejects.toThrow('service category not found');
 
       expect(logger.warn).toHaveBeenCalled();
     });
@@ -150,7 +149,7 @@ describe('serviceCategoryService', () => {
 
       await expect(
         serviceCategoryService.getServiceCategoryById('test-id'),
-      ).rejects.toThrow('Database error');
+      ).rejects.toThrow('Failed to retrieve service category by ID: test-id');
 
       expect(logger.error).toHaveBeenCalled();
     });
@@ -264,7 +263,7 @@ describe('serviceCategoryService', () => {
 
       await expect(
         serviceCategoryService.updateServiceCategory('test-id', updateData),
-      ).rejects.toThrow('Service category not found');
+      ).rejects.toThrow('service category not found');
 
       expect(logger.error).toHaveBeenCalled();
     });
@@ -298,7 +297,7 @@ describe('serviceCategoryService', () => {
 
       await expect(
         serviceCategoryService.deleteServiceCategory('test-id'),
-      ).rejects.toThrow('Service category not found');
+      ).rejects.toThrow('service category not found');
 
       expect(logger.error).toHaveBeenCalled();
     });

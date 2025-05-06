@@ -278,12 +278,14 @@ const getServiceCenterOffering = async (
  * @param {string} serviceCenterId - The ID of the service center
  * @param {string} serviceCenterOfferingId - The ID of the service center offering
  * @param {Object} updateData - The data to update in the service center offering
+ * @param {Object} req - Express request object with headers for auth token
  * @returns {Promise<Object>} - The updated service center offering
  */
 const updateServiceCenterOffering = async (
   serviceCenterId,
   serviceCenterOfferingId,
   updateData,
+  req,
 ) => {
   try {
     logger.info({
@@ -301,6 +303,9 @@ const updateServiceCenterOffering = async (
       },
     });
 
+    // Extract auth token from request headers
+    const authToken = req.headers.authorization;
+
     const response = await axios.patch(
       `${INJECTION_SERVICE_URL}/api/v1/service-centers/${serviceCenterId}/offerings/${serviceCenterOfferingId}`,
       updateData,
@@ -309,6 +314,7 @@ const updateServiceCenterOffering = async (
         timeout: 5000,
         headers: {
           'Content-Type': 'application/json',
+          Authorization: authToken,
         },
       },
     );
